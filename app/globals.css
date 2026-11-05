@@ -12,8 +12,11 @@
   --fg: light-dark(#18181b, #fafafa);
   --muted: light-dark(#52525b, #a1a1aa);
   --faint: light-dark(#71717a, #8e8e98);
-  --accent: light-dark(#0f766e, #5eead4);
-  --accent-fg: light-dark(#ffffff, #042f2e);
+  --accent: light-dark(#2563eb, #60a5fa);
+  --accent-fg: light-dark(#ffffff, #06142e);
+  --accent-soft: light-dark(#dbeafe, #13264a);
+  --accent-text: light-dark(#1d4ed8, #93c5fd);
+  --code-bg: light-dark(#f4f4f5, #0d0d10);
   --ok: light-dark(#166534, #86efac);
   --ok-soft: light-dark(#f0fdf4, #0b2415);
   --warn: light-dark(#854d0e, #fcd34d);
@@ -41,6 +44,9 @@
   --color-faint: var(--faint);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-code: var(--code-bg);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
@@ -63,4 +69,18 @@ body {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

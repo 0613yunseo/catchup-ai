@@ -71,3 +71,38 @@ export const InfoIcon = (p: P) => (
     <path d="M12 16v-4M12 8h.01" />
   </Svg>
 );
+export const PlusIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Svg>
+);
+export const CheckIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="m5 12 5 5 9-10" />
+  </Svg>
+);
+export const FileTextIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
+    <path d="M14 3v5h5M9 13h6M9 17h6" />
+  </Svg>
+);
+export const FileCodeIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
+    <path d="M14 3v5h5M10 13l-2 2 2 2M14 13l2 2-2 2" />
+  </Svg>
+);
+export const UploadIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+  </Svg>
+);
+export const GitBranchIcon = (p: P) => (
+  <Svg {...p}>
+    <circle cx="6" cy="5" r="2" />
+    <circle cx="6" cy="19" r="2" />
+    <circle cx="18" cy="8" r="2" />
+    <path d="M6 7v10M18 10c0 4-6 3-12 7" />
+  </Svg>
+);
