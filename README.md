@@ -164,7 +164,7 @@ Route Handlers (app/api, 서버 전용)
 
 ## TILON GPU 활용
 
-TILON GPU 환경에서 두 가지 작업을 했고, 결과 파일과 확인된 내용을 [`notebooks/`](notebooks/README.md)에 정리했습니다. **Production 분석에는 OpenAI API를 사용하며, Qwen 실험은 서비스에 연결되어 있지 않습니다.**
+TILON GPU 환경에서 두 가지 작업을 했고, 실행 노트북([`workshop.ipynb`](notebooks/workshop.ipynb))과 결과 파일, 확인된 내용을 [`notebooks/`](notebooks/README.md)에 정리했습니다. **Production 분석에는 OpenAI API를 사용하며, Qwen 실험은 서비스에 연결되어 있지 않습니다.**
 
 | 모델 | 용도 | 서비스 반영 | 결과 파일 |
 |---|---|---|---|
@@ -180,7 +180,7 @@ TILON GPU 환경에서 두 가지 작업을 했고, 결과 파일과 확인된 �
 - **결정 상태 오분류**: 원문상 제안인 항목을 미확정으로 분류 (두 설정 모두). Temperature 0.7에서는 결정 상태 칸에 `MISMATCH`, `UNKNOWN` 같은 허용되지 않은 값과 불완전한 문장도 나타남
 - **누락**: 구현 상태 4분류를 정한 문장은 두 설정 모두 추출하지 못함
 
-입력 1건, 설정당 1회 실행한 사례 기록이므로 오류율 같은 통계로 해석할 수 없습니다. 이 관찰과 같은 유형의 문제에 대해 서비스는 모델 출력을 그대로 쓰지 않고 **원문 인용을 서버가 검증하며, 결정 상태를 스키마와 정책으로 제한**합니다(OpenAI 분석에 적용). 자세한 표와 한계는 [`notebooks/README.md`](notebooks/README.md)에 있습니다. 실험을 실행한 노트북은 이 저장소에 포함되어 있지 않습니다.
+입력 1건, 설정당 1회 실행한 사례 기록이므로 오류율 같은 통계로 해석할 수 없습니다. 이 관찰과 같은 유형의 문제에 대해 서비스는 모델 출력을 그대로 쓰지 않고 **원문 인용을 서버가 검증하며, 결정 상태를 스키마와 정책으로 제한**합니다(OpenAI 분석에 적용). 자세한 표와 한계는 [`notebooks/README.md`](notebooks/README.md)에 있습니다. 실행한 노트북은 [`notebooks/workshop.ipynb`](notebooks/workshop.ipynb)이며, 실행 환경(NVIDIA RTX PRO 6000 Blackwell Server Edition, torch 2.7.1+cu128)과 출력이 저장되어 있습니다.
 
 ### 2. SDXL Turbo — 메인 히어로 이미지 생성
 
@@ -192,7 +192,7 @@ TILON GPU 환경에서 두 가지 작업을 했고, 결과 파일과 확인된 �
 | seed / steps / guidance | 42 / 2 / 0.0 |
 | 해상도 · 생성 시간 | 512×512 · 0.968초 |
 
-TILON에서 내려받은 결과 PNG와 `public/gpu-hero.png`는 SHA-256까지 동일한 같은 파일입니다. 서비스에서는 `next/image`로 표시하고, 가장자리를 마스크로 흐려 배경과 섞이게 했습니다.
+TILON에서 내려받은 결과 PNG와 `public/gpu-hero.png`는 SHA-256까지 동일한 같은 파일입니다. 이 이미지를 만든 실행의 설정은 위 JSON에 기록되어 있고, 노트북에 남은 마지막 이미지 생성 셀은 다른 프롬프트로 실행한 결과입니다. 서비스에서는 `next/image`로 표시하고, 가장자리를 마스크로 흐려 배경과 섞이게 했습니다.
 
 ![GPU로 생성한 히어로 이미지](public/gpu-hero.png)
 

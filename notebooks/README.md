@@ -9,11 +9,25 @@ CatchUp AI 개발 중 TILON GPU 환경에서 수행한 두 가지 실험의 **�
 
 | 파일 | 내용 |
 |---|---|
+| [`workshop.ipynb`](workshop.ipynb) | TILON GPU에서 실행한 노트북. 환경 확인, Qwen 로드와 요구사항 추출 실험, SDXL Turbo 로드와 이미지 생성의 코드와 저장된 출력을 포함 |
 | [`results/qwen/catchup_requirements.json`](results/qwen/catchup_requirements.json) | Qwen2.5-1.5B-Instruct 요구사항 추출 실험(Greedy / Temperature 0.7)의 프롬프트·설정·생성 결과 |
 | [`results/sdxl/text2img_5c3d0963fcc2.json`](results/sdxl/text2img_5c3d0963fcc2.json) | SDXL Turbo 이미지 생성 설정(프롬프트·시드·단계·해상도) |
 | [`../public/gpu-hero.png`](../public/gpu-hero.png) | 위 SDXL 설정으로 생성한 이미지. 서비스 메인 화면에 적용됨 |
 
-**포함하지 않은 것**: 실험을 실행한 Jupyter 노트북(`workshop.ipynb`)은 이번에 내려받은 파일에 없어 이 저장소에 포함하지 못했습니다. 실험 조건은 위 JSON의 `prompt`와 `settings`로 확인할 수 있습니다. 두 JSON 모두 모델 이름을 기록하지 않았으며, 사용한 모델은 TILON 워크숍 실습 구성(Qwen2.5-1.5B-Instruct, SDXL Turbo)에 따른 것입니다.
+## 실행 환경 (노트북 출력에서 확인)
+
+| 항목 | 값 |
+|---|---|
+| GPU | NVIDIA RTX PRO 6000 Blackwell Server Edition (노트북에서 보이는 메모리 16.0GB, 공유 환경) |
+| 소프트웨어 | Python 3.11.2, torch 2.7.1+cu128, transformers 5.22.1, diffusers 0.42.1, accelerate 1.15.0 |
+| 모델 | `qwen2.5-1.5b-instruct`, `sdxl-turbo` (서버에 배포된 모델 폴더) |
+| 로드 후 GPU 메모리 | Qwen (bfloat16) 2.88GB, SDXL Turbo 6.58GB |
+
+노트북은 TILON 워크숍 템플릿을 바탕으로 하며, CatchUp AI용으로 바꾼 실험 셀(회의록 추출 비교, 이미지 프롬프트)이 포함되어 있습니다. 노트북 저장본에는 서버의 모델·라이브러리 경로(`/opt/models`, `/opt/jupyter`)가 출력에 남아 있으며, 접속 주소·계정·토큰은 없음을 확인했습니다.
+
+**노트북과 JSON의 관계**
+- Qwen: 노트북의 실험 셀 출력(Greedy 286토큰 5.298초, Temperature 0.7 seed 42)이 `catchup_requirements.json`의 결과와 일치합니다.
+- SDXL: 노트북에 저장된 마지막 이미지 생성 셀은 서비스에 쓰인 이미지와 **다른 프롬프트**(`Elegant 3D illustration, floating white paper sheets …`)로 seed 42·100, steps 2를 실행한 결과(각각 0.51초, 0.396초)이며 `text2img_8448bcbb3252.png`, `text2img_ae7a85b847e1.png`로 저장되었다고 출력됩니다. 서비스 히어로 이미지(`text2img_5c3d0963fcc2`)를 만든 실행은 노트북에 남아 있지 않고, 생성 설정은 아래 JSON에만 기록되어 있습니다. 이 셀의 실행 번호가 31이라 여러 번 실행되었고, 저장본에는 마지막 실행의 출력만 남아 있습니다.
 
 ## 1. Qwen2.5-1.5B-Instruct — 요구사항 추출 비교 실험
 
