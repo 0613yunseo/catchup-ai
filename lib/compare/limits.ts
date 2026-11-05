@@ -19,7 +19,7 @@ export const COMPARE_LIMITS = {
   maxSearchTerms: 8,
   maxSelectFiles: 8,
 
-  maxOutputTokensSelect: 3000,
+  maxOutputTokensSelect: 4500,
   maxOutputTokensVerdict: 9000,
   callTimeoutMs: 60_000,
   totalTimeoutMs: 105_000,

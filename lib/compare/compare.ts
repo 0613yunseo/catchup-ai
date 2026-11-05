@@ -156,8 +156,8 @@ export async function compareRequirements(req: ParsedCompareRequest, deps: Compa
         });
         drafts = new Map(list.map((d) => [d.requirementId, d]));
       } catch (e) {
-        // 형식 오류만 키워드 선택으로 대체한다. 인증·한도·시간 초과 같은 오류는 그대로 알린다.
-        if (e instanceof ExtractError && e.code === "INVALID_OUTPUT") fallback = true;
+        // 파일 선택은 참고용이다. 형식 오류나 응답 잘림은 키워드 선택으로 대체하고, 인증·한도·시간 초과 같은 오류는 그대로 알린다.
+        if (e instanceof ExtractError && (e.code === "INVALID_OUTPUT" || e.code === "OUTPUT_TRUNCATED")) fallback = true;
         else throw toCompareError(e);
       }
       for (const r of eligible) {
