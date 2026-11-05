@@ -164,25 +164,35 @@ Route Handlers (app/api, 서버 전용)
 
 ## TILON GPU 활용
 
-TILON GPU 환경에서 두 가지 작업을 했습니다. **Production 분석에는 OpenAI API를 사용하며, Qwen 실험은 서비스에 연결되어 있지 않습니다.**
+TILON GPU 환경에서 두 가지 작업을 했고, 결과 파일과 확인된 내용을 [`notebooks/`](notebooks/README.md)에 정리했습니다. **Production 분석에는 OpenAI API를 사용하며, Qwen 실험은 서비스에 연결되어 있지 않습니다.**
+
+| 모델 | 용도 | 서비스 반영 | 결과 파일 |
+|---|---|---|---|
+| Qwen2.5-1.5B-Instruct | 회의록 요구사항 추출 비교 실험 (Greedy / Temperature 0.7) | 반영 안 됨 (설계 참고용) | [`notebooks/results/qwen/catchup_requirements.json`](notebooks/results/qwen/catchup_requirements.json) |
+| SDXL Turbo | 메인 히어로 이미지 생성 | 반영됨 | [`notebooks/results/sdxl/text2img_5c3d0963fcc2.json`](notebooks/results/sdxl/text2img_5c3d0963fcc2.json), [`public/gpu-hero.png`](public/gpu-hero.png) |
 
 ### 1. Qwen2.5-1.5B-Instruct — 요구사항 추출 실험 (별도 실험)
 
-회의록에서 요구사항을 추출하는 작업을 소형 오픈 모델로 시험했습니다. 같은 입력에 대해 **Greedy 디코딩과 Temperature 0.7**을 비교했습니다. 관찰된 대표 사례는 다음과 같습니다.
+5문장짜리 회의록 1건(확정·제안·보류 포함)에서 요구사항·결정 상태·원문 근거를 뽑게 하고, **Greedy**(286토큰, 5.3초, 항목 4개)와 **Temperature 0.7**(322토큰, 5.9초, 항목 5개)의 출력을 비교했습니다(공통 seed 42). 저장된 출력을 원문과 대조해 확인한 사례는 다음과 같습니다.
 
-- **원문 인용 불일치**: 문서에 없는 문장이나 바꿔 쓴 문장을 "원문 근거"로 내놓는 경우
-- **중복 요구사항**: 같은 의미의 요구사항을 표현만 바꿔 여러 개로 나누는 경우
-- **결정 상태 오분류**: 제안이나 보류된 내용을 확정으로 분류하는 경우
+- **원문 근거 불일치**: 인용문은 원문에 실제로 있지만 해당 요구사항을 뒷받침하지 않는 다른 문장입니다 (두 설정 모두)
+- **중복 요구사항**: 같은 요구사항을 같은 인용과 함께 반복 출력 (두 설정 모두)
+- **결정 상태 오분류**: 원문상 제안인 항목을 미확정으로 분류 (두 설정 모두). Temperature 0.7에서는 결정 상태 칸에 `MISMATCH`, `UNKNOWN` 같은 허용되지 않은 값과 불완전한 문장도 나타남
+- **누락**: 구현 상태 4분류를 정한 문장은 두 설정 모두 추출하지 못함
 
-이 관찰이 서비스 설계의 출발점이 되었습니다. 모델 출력을 그대로 쓰지 않고 **원문 인용을 서버가 검증**하고, 확정·제안·미확정을 별도 필드로 받아 **정책으로 판정을 제한**하는 구조입니다. 이 저장소에는 정량 수치를 포함하지 않으며, 실험 노트북과 결과 파일은 이 저장소에 포함되어 있지 않습니다.
+입력 1건, 설정당 1회 실행한 사례 기록이므로 오류율 같은 통계로 해석할 수 없습니다. 이 관찰과 같은 유형의 문제에 대해 서비스는 모델 출력을 그대로 쓰지 않고 **원문 인용을 서버가 검증하며, 결정 상태를 스키마와 정책으로 제한**합니다(OpenAI 분석에 적용). 자세한 표와 한계는 [`notebooks/README.md`](notebooks/README.md)에 있습니다. 실험을 실행한 노트북은 이 저장소에 포함되어 있지 않습니다.
 
 ### 2. SDXL Turbo — 메인 히어로 이미지 생성
 
-메인 페이지 히어로 영역의 이미지를 SDXL Turbo로 생성했습니다.
+[`public/gpu-hero.png`](public/gpu-hero.png)는 SDXL Turbo로 생성한 이미지입니다. 기록된 생성 설정은 다음과 같습니다.
 
-- 적용 파일: [`public/gpu-hero.png`](public/gpu-hero.png) (512×512)
-- 프롬프트에 `no text` 같은 표현을 넣으면 오히려 의미 없는 글자가 생성되어, 글자를 연상시키는 단어를 빼고 사물(클립보드, 체크 표시 등)로 묘사하는 방식으로 조정했습니다.
-- 서비스에서는 `next/image`로 표시하고, 가장자리를 마스크로 흐려 배경과 섞이게 했습니다.
+| 항목 | 값 |
+|---|---|
+| 프롬프트 | `Premium 3D SaaS illustration, laptop with blank blue screen, three floating glass panels representing documents code and verification, white studio background, royal blue accents, subtle shadows, clean geometric design, no writing` |
+| seed / steps / guidance | 42 / 2 / 0.0 |
+| 해상도 · 생성 시간 | 512×512 · 0.968초 |
+
+TILON에서 내려받은 결과 PNG와 `public/gpu-hero.png`는 SHA-256까지 동일한 같은 파일입니다. 서비스에서는 `next/image`로 표시하고, 가장자리를 마스크로 흐려 배경과 섞이게 했습니다.
 
 ![GPU로 생성한 히어로 이미지](public/gpu-hero.png)
 
@@ -260,5 +270,6 @@ lib/
   github/             공개 저장소 수집 (tarball, 필터, 제한)
   document/           PDF·DOCX·TXT 텍스트 추출
 public/               gpu-hero.png, screenshots/
+notebooks/            TILON GPU 실험 결과와 설명
 scripts/              수동 스모크 스크립트
 ```

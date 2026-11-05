@@ -1,0 +1,10 @@
+{
+  "prompt": "Premium 3D SaaS illustration, laptop with blank blue screen, three floating glass panels representing documents code and verification, white studio background, royal blue accents, subtle shadows, clean geometric design, no writing",
+  "seed": 42,
+  "steps": 2,
+  "width": 512,
+  "height": 512,
+  "guidance_scale": 0.0,
+  "seconds": 0.968,
+  "image": "text2img_5c3d0963fcc2.png"
+}
