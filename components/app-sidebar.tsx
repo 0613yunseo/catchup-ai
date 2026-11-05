@@ -52,7 +52,7 @@ export function AppSidebar() {
           {nav}
         </nav>
         <div className="mt-auto space-y-3 px-2.5">
-          <p className="text-sm text-faint">UI 프리뷰 · 분석 엔진 미연결</p>
+          <p className="text-sm text-faint">공개 저장소 정적 분석</p>
           <ThemeToggle />
         </div>
       </aside>

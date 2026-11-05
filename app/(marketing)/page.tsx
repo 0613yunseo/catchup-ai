@@ -13,9 +13,11 @@ const FLOW = [
 
 const SCOPE = [
   { label: "입력 화면과 검증", done: true },
-  { label: "리포트 화면 구조", done: true },
-  { label: "문서에서 요구사항 추출", done: false },
-  { label: "GitHub 저장소 조회와 코드 비교", done: false },
+  { label: "AI 요구사항 추출", done: true },
+  { label: "GitHub 저장소 조회와 코드 수집", done: true },
+  { label: "AI 코드 비교와 근거 검증", done: true },
+  { label: "분석 리포트 화면", done: true },
+  { label: "문서 파일 업로드, 분석 기록 저장", done: false },
 ];
 
 const TONE: Record<(typeof STATUSES)[number], string> = {
@@ -50,7 +52,7 @@ export default function Home() {
             </Link>
           </div>
           <p className="mt-4 text-sm text-faint">
-            현재 UI 프리뷰 단계입니다. 분석 엔진은 아직 연결되지 않았습니다.
+            공개 GitHub 저장소를 정적으로 분석합니다. 위 화면은 예시이며, 실제 결과는 분석을 마친 뒤 같은 브라우저 탭에서 볼 수 있습니다.
           </p>
           <div className="mt-12 pb-14 sm:pb-20">
             <ProductPreview />

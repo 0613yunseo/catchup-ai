@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { btnPrimary, btnSecondary } from "@/components/button-styles";
 import { CodePanel } from "@/components/code-panel";
 import { InfoIcon } from "@/components/icons";
@@ -168,6 +169,13 @@ export function ComparisonResult({ state, canRun, disabledReason, onRun, onRetry
               </span>
             ))}
             <span className="text-faint">전체 {data.summary.total}건</span>
+            {state.status === "success" && state.saved ? (
+              <Link href="/report" className={`${btnPrimary} ml-auto h-8 px-3`}>
+                전체 리포트 보기
+              </Link>
+            ) : (
+              <span className="ml-auto text-faint">이 브라우저에서 결과를 보관하지 못해 리포트 화면에서는 열 수 없습니다.</span>
+            )}
           </div>
 
           {!data.coverage.complete && (
@@ -205,8 +213,8 @@ export function ComparisonResult({ state, canRun, disabledReason, onRun, onRetry
           <p className="border-t border-line px-4 py-3 text-sm text-faint">
             정적 코드 분석 결과이며 코드를 실행하거나 테스트하지 않았습니다.{" "}
             {state.status === "success" && state.saved
-              ? "전체 리포트 데이터는 이 브라우저 탭에 임시 보관되었습니다. 리포트 화면 연결은 다음 단계입니다."
-              : "리포트 화면 연결은 다음 단계입니다."}
+              ? "같은 결과를 ‘전체 리포트 보기’에서 열 수 있습니다. 결과는 이 브라우저 탭에만 임시 보관됩니다."
+              : "결과를 이 브라우저에 보관하지 못했습니다."}
           </p>
         </>
       )}

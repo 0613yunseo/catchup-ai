@@ -32,6 +32,7 @@ export function RequirementList({ items, selectedId, onSelect }: Props) {
                 <span className="block truncate text-sm font-medium">{r.text}</span>
                 <span className="mt-0.5 block text-xs text-faint">
                   {r.id} · {sourceLabel(r.source)} · {STATUS_META[r.status].label}
+                  {r.decisionType === "suggestion" ? " · 제안" : r.decisionType === "undecided" ? " · 미확정" : ""}
                 </span>
               </span>
             </button>

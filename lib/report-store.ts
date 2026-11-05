@@ -1,37 +1,83 @@
-// 코드 비교 결과(Report)를 다음 화면(/report)으로 넘기기 위한 브라우저 세션 저장소.
-// 서버에는 저장하지 않는다. 같은 탭에서만 유지되고, 탭을 닫으면 사라진다.
+// 코드 비교 결과(Report)를 /analyze에서 /report로 넘기기 위한 브라우저 세션 저장소.
+// 서버에는 저장하지 않는다. 같은 탭에서만 유지되고(새로고침은 유지), 탭을 닫으면 사라진다.
 import type { Report } from "./report.ts";
 
 export const REPORT_STORAGE_KEY = "catchup:report:v1";
 
 const STATUSES = ["VERIFIED", "PARTIAL", "MISMATCH", "UNKNOWN"];
 const SOURCES = ["meeting", "feedback", "requirements"];
+const DECISIONS = ["confirmed", "suggestion", "undecided"];
+const CHANGES = ["new", "changed", "removed", "unspecified"];
 
 const isStr = (v: unknown): v is string => typeof v === "string";
 const isInt = (v: unknown): v is number => Number.isInteger(v);
+const optStr = (v: unknown) => v === undefined || isStr(v);
+const strArray = (v: unknown) => Array.isArray(v) && v.every(isStr);
+const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
-/** 저장소에서 읽은 값을 그대로 믿지 않고 Report 형태인지 확인한다. */
+/**
+ * 저장소에서 읽은 값을 그대로 믿지 않고 Report 형태인지 확인한다.
+ * 화면이 그대로 렌더링하는 필드는 타입까지 확인해서, 훼손된 값이 화면을 깨뜨리지 못하게 한다.
+ */
 export function isReport(x: unknown): x is Report {
-  const r = x as Record<string, unknown> | null;
-  if (!r || typeof r !== "object") return false;
-  if (!isStr(r.projectName) || !isStr(r.repoUrl) || !isStr(r.analyzedAt) || !Array.isArray(r.requirements)) return false;
-  return r.requirements.every((q) => {
-    const o = q as Record<string, unknown> | null;
-    return (
-      !!o &&
-      typeof o === "object" &&
-      isStr(o.id) &&
-      isStr(o.text) &&
-      SOURCES.includes(o.source as string) &&
-      STATUSES.includes(o.status as string) &&
-      isStr(o.reason) &&
-      Array.isArray(o.evidence) &&
-      o.evidence.every((e) => {
-        const ev = e as Record<string, unknown> | null;
-        return !!ev && isStr(ev.path) && isInt(ev.startLine) && isInt(ev.endLine);
-      })
+  if (!isObj(x)) return false;
+  if (!isStr(x.projectName) || !isStr(x.repoUrl) || !isStr(x.analyzedAt) || !Array.isArray(x.requirements)) return false;
+  if (!optStr(x.commitSha) || !optStr(x.model)) return false;
+  if (x.coverage !== undefined) {
+    const c = x.coverage;
+    if (
+      !isObj(c) ||
+      typeof c.complete !== "boolean" ||
+      !isInt(c.totalFiles) ||
+      !isInt(c.candidates) ||
+      !isInt(c.collected) ||
+      !isInt(c.limited) ||
+      !optStr(c.selection) ||
+      !strArray(c.warnings)
+    ) {
+      return false;
+    }
+  }
+  return x.requirements.every((q) => {
+    if (!isObj(q)) return false;
+    if (!isStr(q.id) || !isStr(q.text) || !SOURCES.includes(q.source as string) || !STATUSES.includes(q.status as string)) return false;
+    if (!isStr(q.reason) || !Array.isArray(q.evidence)) return false;
+    if (!optStr(q.recommendation) || !optStr(q.description) || !optStr(q.sourceQuote) || !optStr(q.policyNote)) return false;
+    if (q.decisionType !== undefined && !DECISIONS.includes(q.decisionType as string)) return false;
+    if (q.changeType !== undefined && !CHANGES.includes(q.changeType as string)) return false;
+    if (q.missingConditions !== undefined && !strArray(q.missingConditions)) return false;
+    if (q.consideredFiles !== undefined && !strArray(q.consideredFiles)) return false;
+    if (q.coverageLimited !== undefined && typeof q.coverageLimited !== "boolean") return false;
+    return q.evidence.every(
+      (e) => isObj(e) && isStr(e.path) && isInt(e.startLine) && isInt(e.endLine) && optStr(e.snippet) && optStr(e.note),
     );
   });
+}
+
+export type StoredReport =
+  | { status: "empty" }
+  /** 저장된 값이 있지만 JSON이 아니거나 Report 형태가 아니다. 화면에는 표시하지 않는다. */
+  | { status: "invalid" }
+  | { status: "ok"; report: Report };
+
+/** 저장소에서 읽은 문자열을 해석한다. 순수 함수라 테스트할 수 있다. */
+export function parseStoredReport(raw: string | null): StoredReport {
+  if (raw === null) return { status: "empty" };
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return isReport(parsed) ? { status: "ok", report: parsed } : { status: "invalid" };
+  } catch {
+    return { status: "invalid" };
+  }
+}
+
+/** 저장된 원본 문자열. 접근이 막혔으면 null(저장된 것이 없는 것으로 본다). */
+export function readRawReport(): string | null {
+  try {
+    return sessionStorage.getItem(REPORT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
 }
 
 export function saveReport(report: Report): boolean {
@@ -44,14 +90,8 @@ export function saveReport(report: Report): boolean {
 }
 
 export function loadReport(): Report | null {
-  try {
-    const raw = sessionStorage.getItem(REPORT_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return isReport(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
+  const r = parseStoredReport(readRawReport());
+  return r.status === "ok" ? r.report : null;
 }
 
 export function clearReport(): void {

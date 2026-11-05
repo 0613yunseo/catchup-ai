@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { EmptyWorkspace } from "@/components/report/empty-workspace";
+import { CoverageNotice } from "@/components/report/coverage-notice";
+import { EmptyWorkspace, type EmptyReason } from "@/components/report/empty-workspace";
 import { ReportHeader } from "@/components/report/report-header";
 import { RequirementDetail } from "@/components/report/requirement-detail";
 import { RequirementList } from "@/components/report/requirement-list";
@@ -11,7 +12,14 @@ import type { Status } from "@/lib/status";
 import { summarize } from "@/lib/summarize";
 
 // 선택·필터·탭 상태만 가진다. 내용은 각 하위 컴포넌트가 Report 타입에서 읽는다.
-export function ReportWorkspace({ report }: { report: Report | null }) {
+type Props = {
+  report: Report | null;
+  /** report가 없을 때 이유. 기본은 저장된 결과 없음 */
+  emptyReason?: EmptyReason;
+  onClear?: () => void;
+};
+
+export function ReportWorkspace({ report, emptyReason = "none", onClear }: Props) {
   const [filter, setFilter] = useState<Status | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<{ id: string; idx: number } | null>(null);
@@ -27,10 +35,11 @@ export function ReportWorkspace({ report }: { report: Report | null }) {
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-8 sm:py-10">
       <ReportHeader report={report} />
       <SummaryStrip summary={report ? summarize(reqs) : null} filter={filter} onFilter={setFilter} />
+      {report && <CoverageNotice report={report} />}
 
       <div className="mt-6">
         {!report ? (
-          <EmptyWorkspace />
+          <EmptyWorkspace reason={emptyReason} onClear={onClear} />
         ) : !current ? (
           <p className="rounded-lg border border-dashed border-line-strong p-6 text-sm text-muted">
             이 상태에 해당하는 요구사항이 없습니다.
@@ -54,7 +63,7 @@ export function ReportWorkspace({ report }: { report: Report | null }) {
               ))}
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
               <section aria-label="요구사항 목록" className={`${tab === "list" ? "" : "hidden"} lg:block`}>
                 <RequirementList
                   items={visible}

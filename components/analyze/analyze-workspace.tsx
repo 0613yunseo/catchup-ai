@@ -139,6 +139,9 @@ export function AnalyzeWorkspace() {
           ? { state: "error", error: cm.error.message }
           : undefined;
 
+  const reportStage: StageResult | undefined =
+    cm.status === "success" && cm.saved ? { state: "done" } : cm.status === "success" ? { state: "error", error: "결과를 브라우저에 보관하지 못했습니다." } : undefined;
+
   const ex = extraction.state;
   const extractStage: StageResult | undefined =
     ex.status === "loading"
@@ -262,7 +265,7 @@ export function AnalyzeWorkspace() {
 
       <aside aria-label="분석 정보" className="space-y-4 xl:sticky xl:top-6 xl:self-start">
         <GithubPanel repoUrl={values.repoUrl} state={inspection.state} onRetry={inspectRepo} />
-        <AnalysisPipeline status="unavailable" stages={{ github: githubStage, extract: extractStage, compare: compareStage }} />
+        <AnalysisPipeline status="unavailable" stages={{ github: githubStage, extract: extractStage, compare: compareStage, report: reportStage }} />
       </aside>
     </form>
   );
