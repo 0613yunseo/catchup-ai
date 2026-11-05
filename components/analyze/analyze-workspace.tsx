@@ -38,6 +38,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function AnalyzeWorkspace() {
   const [values, setValues] = useState<FormValues>(INITIAL);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [uploadStage, setUploadStage] = useState<StageResult | undefined>(undefined);
   const inspection = useRepoInspection(values.repoUrl);
   // 추출 결과는 이름·유형·문서가 같을 때만 보여 준다.
   const extractKey = JSON.stringify([values.name.trim(), values.type, values.text.trim()]);
@@ -118,6 +119,10 @@ export function AnalyzeWorkspace() {
   ];
   const current = done.indexOf(false);
   const stepState = (i: number) => (done[i] ? "done" : i === current ? "current" : "todo");
+
+  // 문서 확인 단계: 파일 처리 중·실패는 업로드 결과를, 그 외에는 입력 문서가 검증을 통과했는지를 따른다.
+  const documentStage: StageResult | undefined =
+    uploadStage ?? (done[1] ? { state: "done" } : undefined);
 
   const st = inspection.state;
   const githubStage: StageResult | undefined =
@@ -205,10 +210,13 @@ export function AnalyzeWorkspace() {
             kind={values.type}
             value={values.text}
             error={errors.text}
-            onChange={(v) => update("text", v)}
+            onChange={(v) => {
+              setUploadStage(undefined);
+              update("text", v);
+            }}
             onBlur={() => blur("text")}
           />
-          <UploadPanel hasText={values.text.trim() !== ""} onApply={(t) => update("text", t)} disabled={extractStatus === "loading"} />
+          <UploadPanel hasText={values.text.trim() !== ""} onApply={(t) => update("text", t)} onStage={setUploadStage} disabled={extractStatus === "loading"} />
         </StepSection>
 
         <StepSection step={3} title="GitHub 저장소" state={stepState(2)} last>
@@ -265,7 +273,7 @@ export function AnalyzeWorkspace() {
 
       <aside aria-label="분석 정보" className="space-y-4 xl:sticky xl:top-6 xl:self-start">
         <GithubPanel repoUrl={values.repoUrl} state={inspection.state} onRetry={inspectRepo} />
-        <AnalysisPipeline status="unavailable" stages={{ github: githubStage, extract: extractStage, compare: compareStage, report: reportStage }} />
+        <AnalysisPipeline status="unavailable" stages={{ document: documentStage, github: githubStage, extract: extractStage, compare: compareStage, report: reportStage }} />
       </aside>
     </form>
   );

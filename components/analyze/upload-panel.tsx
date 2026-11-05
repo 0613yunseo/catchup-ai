@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { btnSecondary } from "@/components/button-styles";
 import { InfoIcon, UploadIcon } from "@/components/icons";
+import type { StageResult } from "@/lib/analysis";
 import { ACCEPT, uploadDocument, type UploadedDocument } from "@/lib/document/api-client";
 
 type State =
@@ -17,12 +18,14 @@ type Props = {
   /** 추출한 텍스트를 문서 입력란에 반영한다. */
   onApply: (text: string) => void;
   disabled?: boolean;
+  /** 업로드 진행 상태를 진행 단계 표시에 알린다. 파일을 처리하지 않을 때는 undefined. */
+  onStage?: (stage: StageResult | undefined) => void;
 };
 
 const PREVIEW_CHARS = 600;
 
 // 파일 1개(PDF·DOCX·TXT)를 올려 텍스트를 추출한다. 원본은 저장하지 않는다.
-export function UploadPanel({ hasText, onApply, disabled }: Props) {
+export function UploadPanel({ hasText, onApply, disabled, onStage }: Props) {
   const [state, setState] = useState<State>({ status: "idle" });
   const inputRef = useRef<HTMLInputElement>(null);
   const busy = state.status === "uploading";
@@ -30,12 +33,15 @@ export function UploadPanel({ hasText, onApply, disabled }: Props) {
   async function onFile(file: File | undefined) {
     if (!file || busy) return;
     setState({ status: "uploading", fileName: file.name });
+    onStage?.({ state: "running" });
     const res = await uploadDocument(file);
     if (inputRef.current) inputRef.current.value = ""; // 같은 파일을 다시 고를 수 있게 한다
     if (!res.ok) {
       setState({ status: "error", message: res.error.message });
+      onStage?.({ state: "error", error: res.error.message });
       return;
     }
+    onStage?.(undefined); // 성공하면 입력 문서 검사 결과(길이)가 단계 상태를 정한다
     // 입력란이 비어 있으면 바로 반영하고, 내용이 있으면 사용자가 확인한 뒤에만 바꾼다.
     if (!hasText) {
       onApply(res.data.text);

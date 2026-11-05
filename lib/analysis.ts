@@ -1,7 +1,7 @@
 // 분석 파이프라인 단계. connected는 그 단계가 실제로 동작하는지를 뜻한다. (현재 모든 단계가 true)
 // 나머지 단계가 연결되면 해당 단계의 connected를 true로 바꾸고 상태를 서버 응답으로 채운다.
 export const STAGES = [
-  { id: "document", label: "문서 확인", description: "입력한 문서의 형식과 길이를 확인합니다.", connected: false },
+  { id: "document", label: "문서 확인", description: "업로드한 파일의 형식을 확인해 텍스트를 읽고, 문서 길이를 점검합니다.", connected: true },
   { id: "extract", label: "요구사항 추출", description: "문서에서 요구사항을 항목으로 나눕니다.", connected: true },
   { id: "github", label: "GitHub 조회", description: "공개 저장소의 파일과 코드를 가져옵니다.", connected: true },
   { id: "compare", label: "코드 비교", description: "요구사항과 코드를 항목별로 대조합니다.", connected: true },
