@@ -173,6 +173,11 @@ export function validateDiff(raw: unknown, req: DiffRequest): Check<ChangeItem[]
       if (latest) latestDecision = "undecided";
     }
     if (!latest) latestDecision = null;
+    // 최신 회의록에서 아직 확정되지 않은 내용은 사람이 결정 여부를 확인해야 한다.
+    if (latest && latestDecision === "undecided" && !needsReview) {
+      needsReview = true;
+      reviewReason ??= "최신 회의록에서 아직 확정되지 않은 내용입니다. 결정 여부를 확인해 주세요.";
+    }
 
     items.push({
       id: "",
