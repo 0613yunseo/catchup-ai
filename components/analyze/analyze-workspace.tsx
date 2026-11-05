@@ -8,7 +8,7 @@ import { DocumentEditor } from "@/components/analyze/document-editor";
 import { ExtractionResult } from "@/components/analyze/extraction-result";
 import { GithubPanel } from "@/components/analyze/github-panel";
 import { StepSection } from "@/components/analyze/step-section";
-import { UploadPlaceholder } from "@/components/analyze/upload-placeholder";
+import { UploadPanel } from "@/components/analyze/upload-panel";
 import { useComparison } from "@/components/analyze/use-comparison";
 import { useExtraction } from "@/components/analyze/use-extraction";
 import { useRepoInspection } from "@/components/analyze/use-repo-inspection";
@@ -208,7 +208,7 @@ export function AnalyzeWorkspace() {
             onChange={(v) => update("text", v)}
             onBlur={() => blur("text")}
           />
-          <UploadPlaceholder />
+          <UploadPanel hasText={values.text.trim() !== ""} onApply={(t) => update("text", t)} disabled={extractStatus === "loading"} />
         </StepSection>
 
         <StepSection step={3} title="GitHub 저장소" state={stepState(2)} last>

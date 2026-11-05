@@ -18,7 +18,8 @@ const SCOPE = [
   { label: "GitHub 저장소 조회와 코드 수집", done: true },
   { label: "AI 코드 비교와 근거 검증", done: true },
   { label: "분석 리포트 화면", done: true },
-  { label: "문서 파일 업로드, 분석 기록 저장", done: false },
+  { label: "문서 파일 업로드 (PDF·DOCX·TXT)", done: true },
+  { label: "분석 기록 저장", done: false },
 ];
 
 const TONE: Record<(typeof STATUSES)[number], string> = {
