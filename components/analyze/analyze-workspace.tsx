@@ -1,19 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { btnPrimary, btnSecondary } from "@/components/button-styles";
 import { AnalysisPipeline } from "@/components/analyze/analysis-pipeline";
 import { DocumentEditor } from "@/components/analyze/document-editor";
+import { ExtractionResult } from "@/components/analyze/extraction-result";
 import { GithubPanel } from "@/components/analyze/github-panel";
 import { StepSection } from "@/components/analyze/step-section";
 import { UploadPlaceholder } from "@/components/analyze/upload-placeholder";
+import { useExtraction } from "@/components/analyze/use-extraction";
 import { useRepoInspection } from "@/components/analyze/use-repo-inspection";
-import { InfoIcon } from "@/components/icons";
 import type { StageResult } from "@/lib/analysis";
 import {
   INPUT_TYPES,
-  parseGithubRepo,
   validate,
   type FieldKey,
   type FormErrors,
@@ -37,18 +36,20 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function AnalyzeWorkspace() {
   const [values, setValues] = useState<FormValues>(INITIAL);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submitted, setSubmitted] = useState<FormValues | null>(null);
-  const noticeRef = useRef<HTMLDivElement>(null);
   const inspection = useRepoInspection(values.repoUrl);
+  // 추출 결과는 이름·유형·문서가 같을 때만 보여 준다.
+  const extraction = useExtraction(JSON.stringify([values.name.trim(), values.type, values.text.trim()]));
+  const panelRef = useRef<HTMLDivElement>(null);
+  const extractStatus = extraction.state.status;
 
+  // 추출이 끝나면(성공·실패) 결과 영역으로 포커스를 옮긴다.
   useEffect(() => {
-    if (submitted) noticeRef.current?.focus();
-  }, [submitted]);
+    if (extractStatus === "success" || extractStatus === "error") panelRef.current?.focus();
+  }, [extractStatus]);
 
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     const next = { ...values, [key]: value };
     setValues(next);
-    setSubmitted(null);
     if (key !== "type" && errors[key as FieldKey]) {
       setErrors((e) => ({ ...e, [key]: validate(next)[key as FieldKey] }));
     }
@@ -75,11 +76,10 @@ export function AnalyzeWorkspace() {
     setErrors(found);
     const first = ORDER.find((k) => found[k]);
     if (first) {
-      setSubmitted(null);
       document.getElementById(`f-${first}`)?.focus();
       return;
     }
-    setSubmitted(values);
+    void extraction.run({ projectName: values.name, documentType: values.type, text: values.text });
   }
 
   // 단계 완료는 입력값이 검증을 통과하는지로만 판단한다.
@@ -92,8 +92,6 @@ export function AnalyzeWorkspace() {
   const current = done.indexOf(false);
   const stepState = (i: number) => (done[i] ? "done" : i === current ? "current" : "todo");
 
-  const repo = submitted ? parseGithubRepo(submitted.repoUrl) : null;
-
   const st = inspection.state;
   const githubStage: StageResult | undefined =
     st.status === "loading"
@@ -102,6 +100,16 @@ export function AnalyzeWorkspace() {
         ? { state: "done" }
         : st.status === "error"
           ? { state: "error", error: st.error.message }
+          : undefined;
+
+  const ex = extraction.state;
+  const extractStage: StageResult | undefined =
+    ex.status === "loading"
+      ? { state: "running" }
+      : ex.status === "success"
+        ? { state: "done" }
+        : ex.status === "error"
+          ? { state: "error", error: ex.error.message }
           : undefined;
 
   return (
@@ -192,55 +200,21 @@ export function AnalyzeWorkspace() {
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button type="submit" className={btnPrimary}>
-              분석 시작
+            <button type="submit" disabled={extractStatus === "loading"} className={`${btnPrimary} disabled:opacity-60`}>
+              {extractStatus === "loading" ? "추출 중…" : "분석 시작"}
             </button>
             <p className="text-sm text-faint">
-              저장소 확인만 동작합니다. 요구사항 추출과 AI 비교는 아직 연결되지 않아 분석은 실행되지 않습니다.
+              AI가 문서에서 요구사항을 추출합니다. GitHub 코드 비교와 리포트 생성은 아직 연결되지 않았습니다.
             </p>
           </div>
 
-          {submitted && (
-            <div
-              ref={noticeRef}
-              tabIndex={-1}
-              role="status"
-              className="rounded-lg border border-warn/40 bg-warn-soft p-4 text-warn"
-            >
-              <div className="flex items-start gap-3">
-                <InfoIcon className="mt-0.5 size-5 shrink-0" />
-                <div className="space-y-2 text-sm">
-                  <p className="font-semibold">분석 엔진이 아직 준비되지 않았습니다</p>
-                  <p>
-                    입력값은 검증을 통과했지만 요구사항 추출과 AI 비교가 아직 연결되지 않아 분석은 실행되지 않았습니다.
-                    <span className="font-mono"> {repo ? `${repo.owner}/${repo.repo}` : ""}</span>
-                    {" "}문서 내용은 서버로 전송되거나 저장되지 않았고, 새로고침하면 사라집니다.
-                  </p>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSubmitted(null);
-                        document.getElementById("f-name")?.focus();
-                      }}
-                      className={btnSecondary}
-                    >
-                      입력 수정
-                    </button>
-                    <Link href="/report" className={btnSecondary}>
-                      리포트 화면 보기
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <ExtractionResult state={extraction.state} onRetry={extraction.retry} panelRef={panelRef} />
         </StepSection>
       </div>
 
       <aside aria-label="분석 정보" className="space-y-4 xl:sticky xl:top-6 xl:self-start">
         <GithubPanel repoUrl={values.repoUrl} state={inspection.state} onRetry={inspectRepo} />
-        <AnalysisPipeline status="unavailable" stages={{ github: githubStage }} />
+        <AnalysisPipeline status="unavailable" stages={{ github: githubStage, extract: extractStage }} />
       </aside>
     </form>
   );

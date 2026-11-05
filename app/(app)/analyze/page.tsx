@@ -9,7 +9,7 @@ export default function AnalyzePage() {
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">새 분석</h1>
         <p className="mt-1.5 text-muted">
-          문서와 공개 저장소를 입력하면 요구사항별 구현 상태를 비교합니다.
+          문서에서 요구사항을 추출하고, 공개 저장소의 코드와 비교하는 것이 목표입니다. 현재는 추출과 저장소 조회까지 동작합니다.
         </p>
       </header>
       <AnalyzeWorkspace />

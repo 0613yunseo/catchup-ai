@@ -43,7 +43,7 @@ export function AnalysisPipeline({ status, stages = {} }: Props) {
           className="flex items-start gap-2 border-b border-line bg-warn-soft px-4 py-3 text-sm text-warn"
         >
           <InfoIcon className="mt-0.5 size-4 shrink-0" />
-          요구사항 추출과 코드 비교는 아직 연결되지 않아 전체 분석은 실행할 수 없습니다. GitHub 조회만 동작합니다.
+          코드 비교와 리포트 생성은 아직 연결되지 않아 전체 분석은 끝까지 실행할 수 없습니다. 요구사항 추출과 GitHub 조회는 동작합니다.
         </p>
       )}
       <ol className="px-4 py-3">
