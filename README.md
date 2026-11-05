@@ -1,36 +1,264 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CatchUp AI
 
-## Getting Started
+> **회의에서 정한 것, 코드에 실제로 있나요?**
 
-First, run the development server:
+회의록·교수 피드백·요구사항 문서에서 AI로 요구사항을 추출하고, 공개 GitHub 저장소의 **실제 소스코드**와 비교해 구현 여부를 **코드 파일·라인 번호 근거**와 함께 보여주는 웹 서비스입니다. NEXT AI 해커톤 출품작입니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| | |
+|---|---|
+| 배포 사이트 | https://catchup-ai-liart.vercel.app/ |
+| GitHub | https://github.com/0613yunseo/catchup-ai |
+
+![CatchUp AI 메인 화면](public/screenshots/home.png)
+
+## 문제 정의
+
+팀 프로젝트에서는 결정이 여러 곳에 흩어집니다. 회의록에는 합의 내용이, 교수 피드백에는 수정 요청이, 별도 문서에는 개발 요구사항이 있습니다. 회의가 거듭될수록 요구사항은 추가되고, 바뀌고, 조용히 사라집니다.
+
+그래서 매번 같은 질문이 남습니다.
+
+- 지난 회의에서 **확정한 것이 실제 코드에 들어갔는가?**
+- 교수님이 **지적한 항목이 반영되었는가?**
+- 이번 회의록이 **지난 회의록과 무엇이 달라졌고**, 그 변경이 코드에 반영되었는가?
+
+이를 확인하려면 문서를 다시 읽고 저장소를 직접 뒤져야 합니다. CatchUp AI는 이 대조 작업을 자동화하되, **AI의 답을 그대로 믿지 않고 서버가 원문과 코드를 다시 확인**하는 방식으로 만들었습니다.
+
+## 핵심 기능
+
+| 기능 | 설명 | 상태 |
+|---|---|---|
+| 문서 입력·업로드 | 회의록·교수 피드백·요구사항을 붙여넣거나 PDF·DOCX·TXT 파일(1개)로 올립니다. 텍스트 PDF만 지원하며 OCR은 없습니다. | 구현 |
+| AI 요구사항 추출 | 문서에서 요구사항을 항목으로 나눕니다. 원문 인용은 서버가 문서와 대조해 검증합니다. | 구현 |
+| 결정 상태 구분 | 각 요구사항을 **확정 / 제안 / 미확정**으로 분류합니다. 제안은 미준수로, 미확정은 구현 여부 판정 대상으로 보지 않습니다. | 구현 |
+| 회의 변경사항 탐지 | 이전·최신 회의록을 비교해 `ADDED` `MODIFIED` `REMOVED` `UNCHANGED` `CONFLICT` `UNCERTAIN`으로 분류하고, 최신 기준 요구사항을 코드와 비교합니다. | 구현 |
+| 공개 저장소 조회 | 공개 GitHub 저장소의 파일 트리와 소스를 커밋 SHA 기준으로 수집합니다. | 구현 |
+| 실제 소스코드 비교 | 수집한 코드를 근거로 요구사항별 구현 여부를 판정합니다. | 구현 |
+| 근거 검증 | AI가 제시한 파일 경로·라인·인용 코드를 서버가 GitHub 원본과 대조합니다. | 구현 |
+| 분석 리포트 | 판정, 이유, 원문 근거, 코드 근거, 변경 유형, 확인하지 못한 조건을 한 화면에 보여줍니다. | 구현 |
+
+### 서비스 이용 방법
+
+1. `/analyze`에서 **단일 문서 분석** 또는 **회의 변경 비교**를 고릅니다.
+2. 프로젝트 이름과 문서를 입력합니다(붙여넣기 또는 파일 업로드). 변경 비교에서는 이전·최신 회의록을 각각 입력합니다.
+3. 공개 GitHub 저장소 URL을 넣고 **저장소 확인**을 누릅니다.
+4. **분석 시작**(또는 **변경사항 분석**)으로 요구사항을 추출한 뒤 **코드 비교 실행**을 누릅니다.
+5. **전체 리포트 보기**에서 `/report` 결과를 확인합니다.
+
+## 서비스 화면
+
+실제 배포 사이트에서 캡처한 화면입니다. 예시 회의록은 이 프로젝트 자체를 대상으로 직접 작성했습니다.
+
+**회의 변경 탐지** — 이전·최신 회의록의 원문 인용이 각각 검증되어 표시됩니다. 아래 R-3은 AI가 삭제로 분류했지만 최신 회의록에 삭제 문장이 없어 서버가 `UNCERTAIN`으로 낮춘 사례입니다.
+
+![회의 변경 탐지 결과](public/screenshots/analyze-changes.png)
+
+**분석 리포트** — 변경 유형과 코드 구현 상태가 따로 표시됩니다.
+
+![분석 리포트](public/screenshots/report.png)
+
+**코드 근거** — 인용된 파일·라인은 서버가 GitHub 원본과 대조한 코드입니다.
+
+![리포트 상세와 코드 근거](public/screenshots/report-evidence.png)
+
+## 판정 기준
+
+**구현 상태** (코드 비교 결과)
+
+| 상태 | 의미 |
+|---|---|
+| `VERIFIED` | 서버가 검증한 코드 근거로 요구사항 구현이 확인됨 |
+| `PARTIAL` | 일부 조건만 확인됨 |
+| `MISMATCH` | 확정된 요구사항과 코드가 어긋나는 근거가 확인됨 |
+| `UNKNOWN` | 검증된 근거가 부족하거나, 확정되지 않은 요구사항이라 판정하지 않음 |
+
+**변경 유형** (회의 변경 비교 결과, 구현 상태와 별개의 필드)
+
+| 유형 | 의미 |
+|---|---|
+| `ADDED` | 최신 회의록에서 새로 생김 |
+| `MODIFIED` | 두 회의록에 모두 있고 의미가 실제로 달라짐 |
+| `REMOVED` | 최신 회의록이 삭제를 **명시적으로 확정**함 |
+| `UNCHANGED` | 의미가 같음(표현만 다른 경우 포함) |
+| `CONFLICT` | 서로 맞지 않는데 최종 결정을 문서만으로 알 수 없음 |
+| `UNCERTAIN` | 근거가 부족하거나 모호함 |
+
+## AI 신뢰성 확보 방식
+
+AI는 후보를 제안하고, **결과로 인정할지는 서버가 정합니다.** 모든 모델 호출은 JSON Schema 기반 Structured Outputs(`strict`)를 쓰고, 응답을 받은 뒤 서버가 다시 검증합니다.
+
+**원문 인용 검증** (`lib/extract`, `lib/diff`)
+- AI가 가져온 `sourceQuote`가 입력 문서에 그대로 있는지 확인합니다(공백·줄바꿈 차이만 허용). 요약·번역·부분 수정은 통과하지 못합니다.
+- 검증에 실패한 응답은 고쳐 쓰지 않고, 문제점을 알려 주며 **한 번만** 다시 요청합니다. 계속 틀리면 결과를 쓰지 않고 오류로 처리합니다.
+
+**코드 근거 검증** (`lib/compare/evidence.ts`)
+- 코드는 클라이언트가 보낸 것을 쓰지 않고, 서버가 같은 **커밋 SHA로 고정해 GitHub에서 직접 수집**합니다.
+- AI가 제시한 경로가 실제로 AI에게 보여준 파일인지, 줄 범위가 유효한지, 인용 코드가 그 줄 안에 있는지 확인합니다. 줄 번호가 한두 줄 어긋난 경우에만 인용 코드가 실제로 발견되는 위치로 보정하고, 보정했다는 사실을 화면에 표시합니다.
+- 화면의 코드 스니펫은 AI가 쓴 글이 아니라 서버가 원본에서 잘라낸 코드입니다.
+
+**서버 정책** (`lib/compare/policy.ts`, `lib/diff/schema.ts`)
+- 검증된 근거가 없으면 `UNKNOWN`입니다. 근거를 찾지 못했다는 이유만으로 `MISMATCH`로 단정하지 않습니다.
+- 미확정 요구사항은 모델을 호출하지 않고 `UNKNOWN`으로 둡니다. 제안은 `MISMATCH`로 판정하지 않습니다.
+- README·`package.json`만 근거인 경우 `VERIFIED`가 될 수 없습니다.
+- 일부 파일을 수집하지 못한 경우 범위 불완전 경고를 표시하고, 삭제 요구는 코드 전체를 확인한 경우에만 확정합니다.
+- 변경 탐지: 최신 회의록에 **언급이 없다는 이유만으로 `REMOVED`로 확정하지 않습니다.** 삭제는 최신 회의록의 확정 문장이 있을 때만 인정하고, 그렇지 않으면 `UNCERTAIN`으로 낮춥니다. 근거 문장이 같은 `MODIFIED`는 `UNCHANGED`로, `CONFLICT`·`UNCERTAIN`은 항상 "추가 확인 필요"로 처리합니다.
+
+**프롬프트 인젝션 방어**: 문서와 코드는 요청마다 무작위로 만든 구분자 블록 안에 데이터로만 전달하고, 그 안의 지시는 따르지 않도록 지시합니다.
+
+## 시스템 구조
+
+```text
+브라우저 (Next.js App Router)
+  /            랜딩
+  /analyze     입력 · 업로드 · 추출/변경 탐지 · 코드 비교
+  /report      리포트 (sessionStorage에서 읽음)
+        │
+        ▼  fetch
+Route Handlers (app/api, 서버 전용)
+  documents/extract ── unpdf · mammoth ── 텍스트 추출 (파일은 메모리에서만 처리)
+  analyze/extract ──┐
+  analyze/diff    ──┼─ OpenAI Responses API (Structured Outputs) ── 서버 검증
+  analyze/compare ──┘          │
+        │                      └─ 근거 검증: 원문 인용 · 코드 경로/라인/인용
+        ▼
+  github/inspect ── GitHub REST API (tarball, 커밋 SHA 고정)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- 별도 데이터베이스와 로그인이 없습니다. 분석 결과(`Report`)는 **같은 브라우저 탭의 `sessionStorage`**에만 보관되고 탭을 닫으면 사라집니다.
+- 업로드한 파일 원본은 저장하지 않으며, 로그에는 형식·크기·글자 수 같은 수치만 남깁니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 기술 스택
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 영역 | 사용 기술 |
+|---|---|
+| 프레임워크 | Next.js 16 (App Router, Route Handlers), React 19 |
+| 언어·스타일 | TypeScript, Tailwind CSS 4 (라이트·다크 테마) |
+| AI | OpenAI API (`openai` SDK, Responses API, Structured Outputs). 모델은 `OPENAI_MODEL`로 지정하며, 배포 환경에서는 `gpt-5.4-mini`로 실행했습니다. |
+| 문서 처리 | `unpdf`(PDF 텍스트), `mammoth`(DOCX) |
+| 코드 수집 | GitHub REST API (`api.github.com` 전용, 별도 인증 없이 공개 저장소) |
+| 테스트 | Node.js 내장 테스트 러너 (`node --test`) |
+| 배포 | Vercel |
 
-## Learn More
+## API 엔드포인트
 
-To learn more about Next.js, take a look at the following resources:
+`app/api/**/route.ts`에 구현된 경로입니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `POST` | `/api/documents/extract` | PDF·DOCX·TXT 1개(multipart, 필드 `file`)에서 텍스트 추출 |
+| `POST` | `/api/github/inspect` | 공개 저장소 확인과 코드 수집 요약 (`{ repoUrl }`) |
+| `POST` | `/api/analyze/extract` | 문서에서 요구사항 추출 (`{ projectName, documentType, text }`) |
+| `GET` | `/api/analyze/extract` | 서버 설정 상태 확인(키 값은 반환하지 않음) |
+| `POST` | `/api/analyze/diff` | 이전·최신 회의록 변경 탐지 (`{ projectName, previousText, latestText }`) |
+| `POST` | `/api/analyze/compare` | 요구사항과 GitHub 코드 비교 (`{ repoUrl, commitSha?, projectName?, requirements }`) |
+| `GET` | `/api/analyze/compare` | 서버 설정 상태 확인 |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 비용·시간 상한
 
-## Deploy on Vercel
+| 항목 | 값 |
+|---|---|
+| 업로드 | 파일 1개, 4MB 이하, PDF 50쪽 이하, 추출 텍스트 20,000자 이하 |
+| 문서 입력 | 문서당 20,000자 이하 |
+| 저장소 수집 | 최대 150개 파일, 파일당 100KB, 총 3MB |
+| 요청 제한 | IP당 10분에 12회, 동시 1건 (서버 인스턴스 단위) |
+| 모델 호출 | 추출·변경 탐지는 정상 시 1회(검증 실패 시 1회 재시도), 코드 비교는 요청당 최대 8회 |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## TILON GPU 활용
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+TILON GPU 환경에서 두 가지 작업을 했습니다. **Production 분석에는 OpenAI API를 사용하며, Qwen 실험은 서비스에 연결되어 있지 않습니다.**
+
+### 1. Qwen2.5-1.5B-Instruct — 요구사항 추출 실험 (별도 실험)
+
+회의록에서 요구사항을 추출하는 작업을 소형 오픈 모델로 시험했습니다. 같은 입력에 대해 **Greedy 디코딩과 Temperature 0.7**을 비교했습니다. 관찰된 대표 사례는 다음과 같습니다.
+
+- **원문 인용 불일치**: 문서에 없는 문장이나 바꿔 쓴 문장을 "원문 근거"로 내놓는 경우
+- **중복 요구사항**: 같은 의미의 요구사항을 표현만 바꿔 여러 개로 나누는 경우
+- **결정 상태 오분류**: 제안이나 보류된 내용을 확정으로 분류하는 경우
+
+이 관찰이 서비스 설계의 출발점이 되었습니다. 모델 출력을 그대로 쓰지 않고 **원문 인용을 서버가 검증**하고, 확정·제안·미확정을 별도 필드로 받아 **정책으로 판정을 제한**하는 구조입니다. 이 저장소에는 정량 수치를 포함하지 않으며, 실험 노트북과 결과 파일은 이 저장소에 포함되어 있지 않습니다.
+
+### 2. SDXL Turbo — 메인 히어로 이미지 생성
+
+메인 페이지 히어로 영역의 이미지를 SDXL Turbo로 생성했습니다.
+
+- 적용 파일: [`public/gpu-hero.png`](public/gpu-hero.png) (512×512)
+- 프롬프트에 `no text` 같은 표현을 넣으면 오히려 의미 없는 글자가 생성되어, 글자를 연상시키는 단어를 빼고 사물(클립보드, 체크 표시 등)로 묘사하는 방식으로 조정했습니다.
+- 서비스에서는 `next/image`로 표시하고, 가장자리를 마스크로 흐려 배경과 섞이게 했습니다.
+
+![GPU로 생성한 히어로 이미지](public/gpu-hero.png)
+
+## 로컬 실행
+
+요구 사항: Node.js 20.9 이상(개발은 Node 24에서 진행), npm
+
+```bash
+git clone https://github.com/0613yunseo/catchup-ai.git
+cd catchup-ai
+npm install
+cp .env.example .env.local   # 값은 직접 채웁니다
+npm run dev                  # http://localhost:3000
+```
+
+환경 변수 (`.env.local` 또는 Vercel 환경 변수에만 저장하며, 서버 전용입니다)
+
+| 이름 | 필수 | 설명 |
+|---|---|---|
+| `OPENAI_API_KEY` | 요구사항 추출·변경 탐지·코드 비교에 필요 | OpenAI API 키. 없으면 AI 기능은 가짜 결과 없이 설정 오류를 반환합니다. |
+| `OPENAI_MODEL` | 선택 | 사용할 모델 이름. 비우면 `gpt-5-mini` |
+| `GITHUB_TOKEN` | 선택 | GitHub API 요청 한도(인증 없이 시간당 60회)가 부족할 때만 사용. 권한 없는 토큰이면 충분합니다. |
+
+## 명령어와 테스트
+
+| 명령 | 설명 |
+|---|---|
+| `npm run dev` | 개발 서버 |
+| `npm run build` / `npm start` | 프로덕션 빌드 / 실행 |
+| `npm run lint` | ESLint |
+| `npm test` | 전체 테스트 (`node --test`) |
+| `npx tsc --noEmit` | 타입 검사 |
+
+테스트 93건은 모두 **mock 모델**로 실행되어 OpenAI를 호출하지 않습니다. 정상·오류·경계 사례를 다루며 영역은 다음과 같습니다.
+
+| 영역 | 파일 |
+|---|---|
+| 요구사항 추출·원문 인용 검증 | `lib/extract/extract.test.mjs` |
+| GitHub 수집·필터·tar 처리 | `lib/github/github.test.mjs` |
+| 코드 비교·근거 검증·정책 | `lib/compare/compare.test.mjs` |
+| 문서 업로드(PDF·DOCX·TXT, 오류·경계) | `lib/document/document.test.mjs` |
+| 회의 변경 탐지·리포트 연동 | `lib/diff/diff.test.mjs` |
+| 입력 검증·리포트 저장·요약 | `lib/validate.test.mjs`, `lib/report-store.test.mjs`, `lib/summarize.test.mjs` |
+
+`scripts/`의 `extract-smoke.mjs`, `compare-smoke.mjs`는 실제 OpenAI·GitHub를 호출하는 수동 확인용 스크립트이며 `npm test`에 포함되지 않습니다.
+
+## 한계
+
+- **공개 GitHub 저장소만 지원합니다.** 비공개 저장소는 조회하지 않습니다.
+- **정적 코드 분석입니다.** 코드를 실행하거나 테스트하지 않으므로, 결과가 실제 동작이나 테스트 통과를 보장하지 않습니다.
+- **근거 검증은 "있는 코드인가"를 확인합니다.** 서버는 AI가 인용한 파일·줄·코드가 실제로 존재함을 확인하지만, 그 코드가 요구사항을 충분히 뒷받침하는지의 의미 판단은 AI에 의존합니다. 실제 시험에서 일반적인 비교 흐름 코드를 근거로 `VERIFIED`가 나온 오판 사례가 있었으며, 같은 입력의 결과도 실행마다 달라질 수 있습니다. 중요한 항목은 화면의 코드 근거를 직접 확인하세요.
+- AI 응답이 서버 검증을 통과하지 못하면 결과를 쓰지 않고 오류를 표시합니다. 이 경우 다시 시도해야 하며, 실제로도 가끔 발생합니다.
+- 대용량 저장소는 일부 파일만 수집·검토합니다(파일 수·용량 상한). 수집하지 못한 범위는 리포트에 경고로 표시됩니다.
+- 변경 탐지는 두 문서의 모든 요구사항이 빠짐없이 짝지어졌는지 서버가 검증하지 못합니다.
+- PDF는 텍스트 기반만 지원하며 스캔 이미지(OCR)는 지원하지 않습니다. 파일은 한 번에 1개만 올릴 수 있습니다.
+- 요청 제한은 서버 인스턴스 단위로 동작합니다.
+
+### 구현하지 않은 기능
+
+로그인, 데이터베이스, 분석 기록 저장·조회, 보고서 내려받기, 다중 문서 업로드, OCR, 비공개 저장소, 코드 자동 수정, 챗봇은 **구현하지 않았습니다.**
+
+## 프로젝트 구조
+
+```text
+app/
+  (marketing)/        랜딩 페이지
+  (app)/analyze       분석 입력 화면
+  (app)/report        리포트 화면
+  api/                Route Handlers (위 API 표 참고)
+components/           화면 컴포넌트 (analyze/, report/, marketing/)
+lib/
+  extract/            요구사항 추출, 원문 인용 검증, 요청 제한
+  diff/               회의 변경 탐지와 서버 정책
+  compare/            코드 비교, 파일 선택, 근거 검증, 판정 정책
+  github/             공개 저장소 수집 (tarball, 필터, 제한)
+  document/           PDF·DOCX·TXT 텍스트 추출
+public/               gpu-hero.png, screenshots/
+scripts/              수동 스모크 스크립트
+```
