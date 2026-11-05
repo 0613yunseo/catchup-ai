@@ -18,6 +18,8 @@ type Props = {
   /** 추출한 텍스트를 문서 입력란에 반영한다. */
   onApply: (text: string) => void;
   disabled?: boolean;
+  /** 같은 화면에 업로드 패널이 둘일 때 입력 요소를 구분한다. */
+  id?: string;
   /** 업로드 진행 상태를 진행 단계 표시에 알린다. 파일을 처리하지 않을 때는 undefined. */
   onStage?: (stage: StageResult | undefined) => void;
 };
@@ -25,7 +27,7 @@ type Props = {
 const PREVIEW_CHARS = 600;
 
 // 파일 1개(PDF·DOCX·TXT)를 올려 텍스트를 추출한다. 원본은 저장하지 않는다.
-export function UploadPanel({ hasText, onApply, disabled, onStage }: Props) {
+export function UploadPanel({ hasText, onApply, disabled, onStage, id = "f-file" }: Props) {
   const [state, setState] = useState<State>({ status: "idle" });
   const inputRef = useRef<HTMLInputElement>(null);
   const busy = state.status === "uploading";
@@ -62,7 +64,7 @@ export function UploadPanel({ hasText, onApply, disabled, onStage }: Props) {
         </p>
         <input
           ref={inputRef}
-          id="f-file"
+          id={id}
           type="file"
           accept={ACCEPT}
           className="sr-only"
@@ -70,7 +72,7 @@ export function UploadPanel({ hasText, onApply, disabled, onStage }: Props) {
           onChange={(e) => void onFile(e.target.files?.[0])}
         />
         <label
-          htmlFor="f-file"
+          htmlFor={id}
           className={`${btnSecondary} cursor-pointer ${disabled || busy ? "pointer-events-none opacity-50" : ""} focus-within:outline`}
         >
           {busy ? "읽는 중…" : "파일 선택"}

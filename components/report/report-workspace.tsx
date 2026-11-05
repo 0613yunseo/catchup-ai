@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { ChangeStrip } from "@/components/report/change-strip";
 import { CoverageNotice } from "@/components/report/coverage-notice";
 import { EmptyWorkspace, type EmptyReason } from "@/components/report/empty-workspace";
 import { ReportHeader } from "@/components/report/report-header";
 import { RequirementDetail } from "@/components/report/requirement-detail";
 import { RequirementList } from "@/components/report/requirement-list";
 import { SummaryStrip } from "@/components/report/summary-strip";
+import type { ChangeKind } from "@/lib/diff/types";
 import type { Report } from "@/lib/report";
 import type { Status } from "@/lib/status";
 import { summarize } from "@/lib/summarize";
@@ -21,12 +23,14 @@ type Props = {
 
 export function ReportWorkspace({ report, emptyReason = "none", onClear }: Props) {
   const [filter, setFilter] = useState<Status | null>(null);
+  const [kindFilter, setKindFilter] = useState<ChangeKind | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<{ id: string; idx: number } | null>(null);
   const [tab, setTab] = useState<"list" | "detail">("list");
 
   const reqs = report?.requirements ?? [];
-  const visible = filter ? reqs.filter((r) => r.status === filter) : reqs;
+  const hasChanges = reqs.some((r) => r.change);
+  const visible = reqs.filter((r) => (!filter || r.status === filter) && (!kindFilter || r.change?.kind === kindFilter));
   const current = visible.find((r) => r.id === selected) ?? visible[0];
   const evIdx = evidence && current && evidence.id === current.id ? evidence.idx : 0;
   const recs = reqs.filter((r) => r.status !== "VERIFIED" && r.recommendation);
@@ -35,6 +39,7 @@ export function ReportWorkspace({ report, emptyReason = "none", onClear }: Props
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-8 sm:py-10">
       <ReportHeader report={report} />
       <SummaryStrip summary={report ? summarize(reqs) : null} filter={filter} onFilter={setFilter} />
+      {report && hasChanges && <ChangeStrip items={reqs} filter={kindFilter} onFilter={setKindFilter} />}
       {report && <CoverageNotice report={report} />}
 
       <div className="mt-6">

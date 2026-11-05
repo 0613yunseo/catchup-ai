@@ -19,6 +19,7 @@ const SCOPE = [
   { label: "AI 코드 비교와 근거 검증", done: true },
   { label: "분석 리포트 화면", done: true },
   { label: "문서 파일 업로드 (PDF·DOCX·TXT)", done: true },
+  { label: "이전·최신 회의록 변경 비교", done: true },
   { label: "분석 기록 저장", done: false },
 ];
 

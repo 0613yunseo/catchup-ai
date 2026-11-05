@@ -43,7 +43,7 @@ export function ReportHeader({ report }: { report: Report | null }) {
             </p>
             <p className="mt-1 text-sm text-faint">
               {when(report.analyzedAt)}
-              {report.model ? ` · AI 모델 ${report.model}` : ""} · 정적 코드 분석
+              {report.model ? ` · AI 모델 ${report.model}` : ""} {report.mode === "diff" ? " · 회의 변경 비교" : ""} · 정적 코드 분석
             </p>
           </>
         ) : (

@@ -1,5 +1,6 @@
 // 코드 비교 결과(Report)를 /analyze에서 /report로 넘기기 위한 브라우저 세션 저장소.
 // 서버에는 저장하지 않는다. 같은 탭에서만 유지되고(새로고침은 유지), 탭을 닫으면 사라진다.
+import { CHANGE_KINDS } from "./diff/types.ts";
 import type { Report } from "./report.ts";
 
 export const REPORT_STORAGE_KEY = "catchup:report:v1";
@@ -14,6 +15,15 @@ const isInt = (v: unknown): v is number => Number.isInteger(v);
 const optStr = (v: unknown) => v === undefined || isStr(v);
 const strArray = (v: unknown) => Array.isArray(v) && v.every(isStr);
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+const isSide = (v: unknown) => isObj(v) && isStr(v.text) && isStr(v.quote);
+
+// 변경 정보(change)는 화면이 그대로 렌더링하므로 타입까지 확인한다.
+function isChange(c: unknown): boolean {
+  if (!isObj(c)) return false;
+  if (!CHANGE_KINDS.includes(c.kind as (typeof CHANGE_KINDS)[number]) || !isStr(c.summary) || typeof c.needsReview !== "boolean") return false;
+  if (!optStr(c.reviewReason) || !optStr(c.serverNote)) return false;
+  return (c.previous === undefined || isSide(c.previous)) && (c.latest === undefined || isSide(c.latest));
+}
 
 /**
  * 저장소에서 읽은 값을 그대로 믿지 않고 Report 형태인지 확인한다.
@@ -23,6 +33,7 @@ export function isReport(x: unknown): x is Report {
   if (!isObj(x)) return false;
   if (!isStr(x.projectName) || !isStr(x.repoUrl) || !isStr(x.analyzedAt) || !Array.isArray(x.requirements)) return false;
   if (!optStr(x.commitSha) || !optStr(x.model)) return false;
+  if (x.mode !== undefined && x.mode !== "single" && x.mode !== "diff") return false;
   if (x.coverage !== undefined) {
     const c = x.coverage;
     if (
@@ -48,6 +59,7 @@ export function isReport(x: unknown): x is Report {
     if (q.missingConditions !== undefined && !strArray(q.missingConditions)) return false;
     if (q.consideredFiles !== undefined && !strArray(q.consideredFiles)) return false;
     if (q.coverageLimited !== undefined && typeof q.coverageLimited !== "boolean") return false;
+    if (q.change !== undefined && !isChange(q.change)) return false;
     return q.evidence.every(
       (e) => isObj(e) && isStr(e.path) && isInt(e.startLine) && isInt(e.endLine) && optStr(e.snippet) && optStr(e.note),
     );

@@ -1,3 +1,4 @@
+import type { ChangeKind } from "@/lib/diff/types";
 import type { Status } from "@/lib/status";
 import type { InputType } from "@/lib/validate";
 
@@ -18,6 +19,21 @@ export type Evidence = {
   endLine: number;
   snippet?: string;
   note?: string;
+};
+
+/** 회의 변경 비교에서 붙는 변경 정보. 구현 상태(status)와는 별개이다. */
+export type RequirementChange = {
+  kind: ChangeKind;
+  summary: string;
+  /** 사람이 원문을 직접 확인해야 하는지 */
+  needsReview: boolean;
+  reviewReason?: string;
+  /** 서버가 AI의 분류를 낮추거나 보정한 이유 */
+  serverNote?: string;
+  /** 이전 회의록 쪽 내용과 원문 근거 */
+  previous?: { text: string; quote: string };
+  /** 최신 회의록 쪽 내용과 원문 근거 */
+  latest?: { text: string; quote: string };
 };
 
 export type Requirement = {
@@ -48,6 +64,8 @@ export type Requirement = {
   decidedBy?: "model" | "policy";
   /** 이 요구사항을 비교할 때 AI에게 보여 준 파일 */
   consideredFiles?: string[];
+  /** 회의 변경 비교 결과일 때만 있다. */
+  change?: RequirementChange;
 };
 
 /** 코드 수집·비교 범위. complete가 false면 일부 파일을 보지 못한 분석이다. */
@@ -63,6 +81,8 @@ export type ReportCoverage = {
 };
 
 export type Report = {
+  /** single: 단일 문서 분석, diff: 이전·최신 회의록 변경 비교. 없으면 single */
+  mode?: "single" | "diff";
   /** 분석 기록 목록에서 이 결과를 가리키는 id. */
   id?: string;
   projectName: string;

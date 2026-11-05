@@ -1,0 +1,49 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { requestDiff } from "@/lib/diff/api-client";
+import type { DiffRequest, DiffResponse } from "@/lib/diff/types";
+import type { ExtractErrorInfo } from "@/lib/extract/types";
+
+export type DiffState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: DiffResponse }
+  | { status: "error"; error: ExtractErrorInfo };
+
+// 회의 변경 비교 상태. 결과는 요청 당시의 입력(key)에 묶여 있어서, 입력을 고치면 이전 결과는 숨겨진다.
+export function useDiff(key: string) {
+  const [result, setResult] = useState<{ key: string; state: DiffState }>({ key: "", state: { status: "idle" } });
+  const inflight = useRef(false);
+  const abort = useRef<AbortController | null>(null);
+  const last = useRef<DiffRequest | null>(null);
+
+  useEffect(() => () => abort.current?.abort(), []);
+
+  const run = useCallback(
+    async (input: DiffRequest) => {
+      if (inflight.current) return; // 중복 요청 방지
+      inflight.current = true;
+      last.current = input;
+      const controller = new AbortController();
+      abort.current = controller;
+      setResult({ key, state: { status: "loading" } });
+      try {
+        const outcome = await requestDiff(input, controller.signal);
+        setResult({ key, state: outcome.ok ? { status: "success", data: outcome.data } : { status: "error", error: outcome.error } });
+      } catch {
+        // 화면을 벗어나 취소된 요청은 무시한다.
+      } finally {
+        inflight.current = false;
+      }
+    },
+    [key],
+  );
+
+  const retry = useCallback(() => {
+    if (last.current) void run(last.current);
+  }, [run]);
+
+  const state: DiffState = result.key === key ? result.state : { status: "idle" };
+  return { state, run, retry };
+}

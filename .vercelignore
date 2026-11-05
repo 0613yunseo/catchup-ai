@@ -1,0 +1,5 @@
+# keep local-only files out of CLI deployments
+.playwright-mcp/
+.env*
+!.env.example
+*.tsbuildinfo

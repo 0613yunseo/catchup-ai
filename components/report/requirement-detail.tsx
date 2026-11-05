@@ -1,3 +1,4 @@
+import { ChangeBadge } from "@/components/change-badge";
 import { CodePanel } from "@/components/code-panel";
 import { InfoIcon } from "@/components/icons";
 import { StatusBadge } from "@/components/status-badge";
@@ -30,13 +31,51 @@ export function RequirementDetail({ req, evidenceIdx, onEvidence }: Props) {
                 {req.decisionType === "suggestion" ? " · 미준수로 판정하지 않음" : " · 구현 여부 판정 안 함"}
               </span>
             )}
+            {req.change && <ChangeBadge kind={req.change.kind} />}
             {req.changeType === "removed" && <span className="rounded-full bg-sunken px-2.5 py-0.5 text-xs text-muted">삭제 요구</span>}
           </p>
-          <StatusBadge status={req.status} />
+          <span className="inline-flex items-center gap-2 text-xs text-faint">
+            {req.change ? "코드 구현 상태" : null}
+            <StatusBadge status={req.status} />
+          </span>
         </div>
         <h2 className="mt-2 text-xl font-semibold leading-snug">{req.text}</h2>
         {req.description && <p className="mt-2 text-sm text-muted">{req.description}</p>}
       </div>
+
+      {req.change && (
+        <div className="space-y-3 rounded-lg border border-line p-4">
+          <h3 className="text-sm font-semibold">회의 변경 사항</h3>
+          <p className="text-sm">{req.change.summary}</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {([["이전 회의록", req.change.previous], ["최신 회의록", req.change.latest]] as const).map(([label, side]) => (
+              <div key={label} className="min-w-0">
+                <p className="text-xs text-faint">{label} · 원문 일치 확인됨</p>
+                {side ? (
+                  <blockquote className="mt-1 border-l-2 border-accent pl-3 text-sm text-muted">
+                    <span className="block font-medium text-fg">{side.text}</span>
+                    {side.quote}
+                  </blockquote>
+                ) : (
+                  <p className="mt-1 text-sm text-faint">해당 회의록에 없음</p>
+                )}
+              </div>
+            ))}
+          </div>
+          {req.change.needsReview && (
+            <p className="flex items-start gap-2 text-sm text-warn">
+              <InfoIcon className="mt-0.5 size-4 shrink-0" />
+              추가 확인 필요{req.change.reviewReason ? `: ${req.change.reviewReason}` : ""}
+            </p>
+          )}
+          {req.change.serverNote && (
+            <p className="flex items-start gap-2 text-sm text-muted">
+              <InfoIcon className="mt-0.5 size-4 shrink-0" />
+              서버 검증: {req.change.serverNote}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <div>

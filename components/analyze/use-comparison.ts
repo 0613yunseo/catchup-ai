@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestCompare } from "@/lib/compare/api-client";
 import type { CompareErrorInfo, CompareRequestBody, CompareResponse } from "@/lib/compare/types";
+import type { Report } from "@/lib/report";
 import { saveReport } from "@/lib/report-store";
 
 export type ComparisonState =
@@ -19,15 +20,16 @@ export function useComparison(key: string) {
   });
   const inflight = useRef(false);
   const abort = useRef<AbortController | null>(null);
-  const last = useRef<CompareRequestBody | null>(null);
+  const last = useRef<{ body: CompareRequestBody; decorate?: (r: Report) => Report } | null>(null);
 
   useEffect(() => () => abort.current?.abort(), []);
 
   const run = useCallback(
-    async (body: CompareRequestBody) => {
+    // decorate: 저장하기 전에 Report에 정보를 덧붙인다. (예: 회의 변경 정보) 서버 응답은 바꾸지 않는다.
+    async (body: CompareRequestBody, decorate?: (r: Report) => Report) => {
       if (inflight.current) return; // 중복 요청 방지
       inflight.current = true;
-      last.current = body;
+      last.current = { body, decorate };
       const controller = new AbortController();
       abort.current = controller;
       setResult({ key, state: { status: "loading" } });
@@ -46,7 +48,7 @@ export function useComparison(key: string) {
           });
         } else {
           // 다음 화면(/report)에서 쓸 수 있도록 Report를 이 탭의 세션에 보관한다.
-          setResult({ key, state: { status: "success", data: outcome.data, saved: saveReport(outcome.data.report) } });
+          setResult({ key, state: { status: "success", data: outcome.data, saved: saveReport(decorate ? decorate(outcome.data.report) : outcome.data.report) } });
         }
       } catch {
         // 화면을 벗어나 취소된 요청은 무시한다.
@@ -58,7 +60,7 @@ export function useComparison(key: string) {
   );
 
   const retry = useCallback(() => {
-    if (last.current) void run(last.current);
+    if (last.current) void run(last.current.body, last.current.decorate);
   }, [run]);
 
   const state: ComparisonState = result.key === key ? result.state : { status: "idle" };
