@@ -34,8 +34,8 @@ export default function Home() {
       <section className="relative">
         {/* 제품 프리뷰 뒤의 파란 면 */}
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 top-[58%] bg-accent-soft" />
-        <div className="relative mx-auto w-full max-w-6xl px-4 pt-14 sm:px-6 sm:pt-24">
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12">
+        <div className="relative mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6 sm:pt-12 lg:pt-14">
+          <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12">
             <div>
               <h1 className="max-w-4xl text-4xl font-semibold leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl lg:leading-[1.1]">
                 회의에서 정한 것,
@@ -58,16 +58,28 @@ export default function Home() {
                 공개 GitHub 저장소를 정적으로 분석합니다. 아래 리포트 화면은 예시이며, 실제 결과는 분석을 마친 뒤 같은 브라우저 탭에서 볼 수 있습니다.
               </p>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-line-strong bg-surface">
-              <Image
-                src="/gpu-hero.png"
-                alt="노트북 화면과 떠 있는 유리 패널로 표현한 회의 내용과 코드 비교 이미지"
-                width={512}
-                height={512}
-                priority
-                sizes="(min-width: 1024px) 440px, 100vw"
-                className="mx-auto h-auto w-full max-w-md object-contain lg:max-w-none"
+            <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+              {/* 뒤에서 은은하게 번지는 파란 빛 */}
+              <div
+                aria-hidden="true"
+                className="absolute -inset-4 rounded-[2.5rem] bg-accent/15 blur-2xl"
               />
+              <div className="relative overflow-hidden rounded-[2rem] bg-surface shadow-[0_24px_60px_-24px_rgb(37_99_235/0.35)] ring-1 ring-inset ring-line/60 sm:rounded-[2.5rem]">
+                <Image
+                  src="/gpu-hero.png"
+                  alt="노트북 화면과 떠 있는 유리 패널로 표현한 회의 내용과 코드 비교 이미지"
+                  width={512}
+                  height={512}
+                  priority
+                  sizes="(min-width: 1024px) 440px, 100vw"
+                  className="h-auto w-full object-contain"
+                />
+                {/* 가장자리를 배경색으로 부드럽게 녹이는 오버레이 */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_36px_10px_var(--surface)] opacity-70"
+                />
+              </div>
             </div>
           </div>
           <div className="mt-12 pb-14 sm:pb-20">
