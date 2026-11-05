@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRightIcon, CheckIcon, MinusCircleIcon } from "@/components/icons";
 import { btnOnAccent, btnPrimary, btnSecondary } from "@/components/button-styles";
@@ -34,26 +35,41 @@ export default function Home() {
         {/* 제품 프리뷰 뒤의 파란 면 */}
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 top-[58%] bg-accent-soft" />
         <div className="relative mx-auto w-full max-w-6xl px-4 pt-14 sm:px-6 sm:pt-24">
-          <h1 className="max-w-4xl text-4xl font-semibold leading-[1.15] tracking-tight sm:text-6xl sm:leading-[1.1]">
-            회의에서 정한 것,
-            <br />
-            코드에 실제로 있나요?
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted">
-            회의록과 요구사항을 GitHub 코드와 비교해, 구현 여부를 근거와 함께 확인하세요.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/analyze" className={btnPrimary}>
-              분석 시작
-              <ArrowRightIcon />
-            </Link>
-            <Link href="/report" className={btnSecondary}>
-              리포트 화면 보기
-            </Link>
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12">
+            <div>
+              <h1 className="max-w-4xl text-4xl font-semibold leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl lg:leading-[1.1]">
+                회의에서 정한 것,
+                <br />
+                코드에 실제로 있나요?
+              </h1>
+              <p className="mt-6 max-w-xl text-lg text-muted">
+                회의록과 요구사항을 GitHub 코드와 비교해, 구현 여부를 근거와 함께 확인하세요.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="/analyze" className={btnPrimary}>
+                  분석 시작
+                  <ArrowRightIcon />
+                </Link>
+                <Link href="/report" className={btnSecondary}>
+                  리포트 화면 보기
+                </Link>
+              </div>
+              <p className="mt-4 text-sm text-faint">
+                공개 GitHub 저장소를 정적으로 분석합니다. 아래 리포트 화면은 예시이며, 실제 결과는 분석을 마친 뒤 같은 브라우저 탭에서 볼 수 있습니다.
+              </p>
+            </div>
+            <div className="overflow-hidden rounded-2xl border border-line-strong bg-surface">
+              <Image
+                src="/gpu-hero.png"
+                alt="노트북 화면과 떠 있는 유리 패널로 표현한 회의 내용과 코드 비교 이미지"
+                width={512}
+                height={512}
+                priority
+                sizes="(min-width: 1024px) 440px, 100vw"
+                className="mx-auto h-auto w-full max-w-md object-contain lg:max-w-none"
+              />
+            </div>
           </div>
-          <p className="mt-4 text-sm text-faint">
-            공개 GitHub 저장소를 정적으로 분석합니다. 위 화면은 예시이며, 실제 결과는 분석을 마친 뒤 같은 브라우저 탭에서 볼 수 있습니다.
-          </p>
           <div className="mt-12 pb-14 sm:pb-20">
             <ProductPreview />
           </div>
