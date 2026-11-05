@@ -62,24 +62,17 @@ export default function Home() {
               {/* 뒤에서 은은하게 번지는 파란 빛 */}
               <div
                 aria-hidden="true"
-                className="absolute -inset-4 rounded-[2.5rem] bg-accent/15 blur-2xl"
+                className="absolute inset-0 rounded-full bg-accent/20 blur-3xl"
               />
-              <div className="relative overflow-hidden rounded-[2rem] bg-surface shadow-[0_24px_60px_-24px_rgb(37_99_235/0.35)] ring-1 ring-inset ring-line/60 sm:rounded-[2.5rem]">
-                <Image
-                  src="/gpu-hero.png"
-                  alt="노트북 화면과 떠 있는 유리 패널로 표현한 회의 내용과 코드 비교 이미지"
-                  width={512}
-                  height={512}
-                  priority
-                  sizes="(min-width: 1024px) 440px, 100vw"
-                  className="h-auto w-full object-contain"
-                />
-                {/* 가장자리를 배경색으로 부드럽게 녹이는 오버레이 */}
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_36px_10px_var(--surface)] opacity-70"
-                />
-              </div>
+              <Image
+                src="/gpu-hero.png"
+                alt="노트북 화면과 떠 있는 유리 패널로 표현한 회의 내용과 코드 비교 이미지"
+                width={512}
+                height={512}
+                priority
+                sizes="(min-width: 1024px) 440px, 100vw"
+                className="relative h-auto w-full object-contain [mask-image:radial-gradient(closest-side,#000_72%,transparent_100%)] [-webkit-mask-image:radial-gradient(closest-side,#000_72%,transparent_100%)]"
+              />
             </div>
           </div>
           <div className="mt-12 pb-14 sm:pb-20">
