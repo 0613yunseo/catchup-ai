@@ -30,8 +30,9 @@ export function parseGithubRepo(input: string): { owner: string; repo: string } 
   const [owner, rawRepo, ...rest] = url.pathname.split("/").filter(Boolean);
   if (!owner || !rawRepo || rest.length > 0) return null;
   const repo = rawRepo.replace(/\.git$/, "");
-  const ok = /^[\w.-]+$/;
-  if (!repo || !ok.test(owner) || !ok.test(repo)) return null;
+  // GitHub 규칙: 소유자는 영문·숫자·하이픈(39자 이하), 저장소는 영문·숫자·._-(100자 이하). "."과 ".."는 경로 이탈이므로 거부한다.
+  if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(owner)) return null;
+  if (!/^[A-Za-z0-9._-]{1,100}$/.test(repo) || repo === "." || repo === "..") return null;
   return { owner, repo };
 }
 

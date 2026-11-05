@@ -43,12 +43,13 @@ export function AnalysisPipeline({ status, stages = {} }: Props) {
           className="flex items-start gap-2 border-b border-line bg-warn-soft px-4 py-3 text-sm text-warn"
         >
           <InfoIcon className="mt-0.5 size-4 shrink-0" />
-          분석 API가 아직 연결되지 않아 실행할 수 없습니다.
+          요구사항 추출과 코드 비교는 아직 연결되지 않아 전체 분석은 실행할 수 없습니다. GitHub 조회만 동작합니다.
         </p>
       )}
       <ol className="px-4 py-3">
         {STAGES.map((s, i) => {
-          const result = unavailable ? undefined : stages[s.id];
+          const off = !s.connected;
+          const result = off ? undefined : stages[s.id];
           const state: StageState = result?.state ?? "pending";
           const last = i === STAGES.length - 1;
           return (
@@ -56,14 +57,14 @@ export function AnalysisPipeline({ status, stages = {} }: Props) {
               {!last && (
                 <span aria-hidden="true" className="absolute left-[9.5px] top-6 bottom-0 w-px bg-line" />
               )}
-              <span className={`flex shrink-0 ${unavailable ? "opacity-60" : ""}`}>
+              <span className={`flex shrink-0 ${off ? "opacity-60" : ""}`}>
                 <Marker state={state} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
-                  <p className={`text-sm font-medium ${unavailable ? "text-muted" : ""}`}>{s.label}</p>
+                  <p className={`text-sm font-medium ${off ? "text-muted" : ""}`}>{s.label}</p>
                   <p className="shrink-0 text-xs text-faint">
-                    {unavailable ? "준비 중" : STATE_LABEL[state]}
+                    {off ? "미연결" : STATE_LABEL[state]}
                   </p>
                 </div>
                 <p className="mt-0.5 text-sm text-faint">{s.description}</p>

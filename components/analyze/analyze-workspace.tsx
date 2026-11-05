@@ -8,7 +8,9 @@ import { DocumentEditor } from "@/components/analyze/document-editor";
 import { GithubPanel } from "@/components/analyze/github-panel";
 import { StepSection } from "@/components/analyze/step-section";
 import { UploadPlaceholder } from "@/components/analyze/upload-placeholder";
+import { useRepoInspection } from "@/components/analyze/use-repo-inspection";
 import { InfoIcon } from "@/components/icons";
+import type { StageResult } from "@/lib/analysis";
 import {
   INPUT_TYPES,
   parseGithubRepo,
@@ -37,6 +39,7 @@ export function AnalyzeWorkspace() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState<FormValues | null>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
+  const inspection = useRepoInspection(values.repoUrl);
 
   useEffect(() => {
     if (submitted) noticeRef.current?.focus();
@@ -53,6 +56,17 @@ export function AnalyzeWorkspace() {
 
   function blur(key: FieldKey) {
     setErrors((e) => ({ ...e, [key]: validate(values)[key] }));
+  }
+
+  // GitHub 저장소 확인: 저장소 주소만 검증하고 실제 조회를 요청한다.
+  function inspectRepo() {
+    const err = validate(values).repoUrl;
+    setErrors((e) => ({ ...e, repoUrl: err }));
+    if (err) {
+      document.getElementById("f-repoUrl")?.focus();
+      return;
+    }
+    void inspection.inspect();
   }
 
   function onSubmit(ev: FormEvent) {
@@ -79,6 +93,16 @@ export function AnalyzeWorkspace() {
   const stepState = (i: number) => (done[i] ? "done" : i === current ? "current" : "todo");
 
   const repo = submitted ? parseGithubRepo(submitted.repoUrl) : null;
+
+  const st = inspection.state;
+  const githubStage: StageResult | undefined =
+    st.status === "loading"
+      ? { state: "running" }
+      : st.status === "success"
+        ? { state: "done" }
+        : st.status === "error"
+          ? { state: "error", error: st.error.message }
+          : undefined;
 
   return (
     <form
@@ -158,12 +182,22 @@ export function AnalyzeWorkspace() {
               className={`${inputCls} font-mono sm:max-w-xl`}
             />
             <FieldError id="e-repoUrl" message={errors.repoUrl} />
+            <button
+              type="button"
+              onClick={inspectRepo}
+              disabled={inspection.state.status === "loading"}
+              className={`${btnSecondary} mt-3 disabled:opacity-60`}
+            >
+              {inspection.state.status === "loading" ? "확인 중…" : "저장소 확인"}
+            </button>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button type="submit" className={btnPrimary}>
               분석 시작
             </button>
-            <p className="text-sm text-faint">분석 엔진이 연결되지 않아 실제 분석은 실행되지 않습니다.</p>
+            <p className="text-sm text-faint">
+              저장소 확인만 동작합니다. 요구사항 추출과 AI 비교는 아직 연결되지 않아 분석은 실행되지 않습니다.
+            </p>
           </div>
 
           {submitted && (
@@ -178,9 +212,9 @@ export function AnalyzeWorkspace() {
                 <div className="space-y-2 text-sm">
                   <p className="font-semibold">분석 엔진이 아직 준비되지 않았습니다</p>
                   <p>
-                    입력값은 검증을 통과했지만 분석은 실행되지 않았습니다.
+                    입력값은 검증을 통과했지만 요구사항 추출과 AI 비교가 아직 연결되지 않아 분석은 실행되지 않았습니다.
                     <span className="font-mono"> {repo ? `${repo.owner}/${repo.repo}` : ""}</span>
-                    {" "}입력 내용은 서버로 전송되거나 저장되지 않았고, 새로고침하면 사라집니다.
+                    {" "}문서 내용은 서버로 전송되거나 저장되지 않았고, 새로고침하면 사라집니다.
                   </p>
                   <div className="flex flex-wrap gap-2 pt-1">
                     <button
@@ -205,8 +239,8 @@ export function AnalyzeWorkspace() {
       </div>
 
       <aside aria-label="분석 정보" className="space-y-4 xl:sticky xl:top-6 xl:self-start">
-        <GithubPanel repoUrl={values.repoUrl} />
-        <AnalysisPipeline status="unavailable" />
+        <GithubPanel repoUrl={values.repoUrl} state={inspection.state} onRetry={inspectRepo} />
+        <AnalysisPipeline status="unavailable" stages={{ github: githubStage }} />
       </aside>
     </form>
   );
