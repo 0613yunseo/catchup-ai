@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { ReportWorkspace } from "@/components/report/report-workspace";
+import { getReport } from "@/lib/report-source";
 
 export const metadata: Metadata = { title: "분석 리포트" };
 
-// 분석 API 연결 전: 리포트 데이터가 없다. 연결 후 여기서 Report를 받아 넘긴다.
-export default function ReportPage() {
-  return <ReportWorkspace report={null} />;
+export default async function ReportPage() {
+  const report = await getReport();
+  return <ReportWorkspace report={report} />;
 }

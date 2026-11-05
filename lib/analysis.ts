@@ -10,5 +10,8 @@ export const STAGES = [
 export type StageId = (typeof STAGES)[number]["id"];
 export type StageState = "pending" | "running" | "done" | "error";
 
+/** 단계 하나의 결과. 오류 메시지는 단계 단위로 받아 해당 단계 아래에 표시한다. */
+export type StageResult = { state: StageState; error?: string };
+
 // unavailable: 분석 API가 아직 없어 실행할 수 없는 상태
 export type RunStatus = "unavailable" | "idle" | "running" | "done" | "error";

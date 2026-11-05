@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { btnPrimary, btnSecondary } from "@/components/button-styles";
 import { AnalysisPipeline } from "@/components/analyze/analysis-pipeline";
+import { DocumentEditor } from "@/components/analyze/document-editor";
 import { GithubPanel } from "@/components/analyze/github-panel";
 import { StepSection } from "@/components/analyze/step-section";
 import { UploadPlaceholder } from "@/components/analyze/upload-placeholder";
 import { InfoIcon } from "@/components/icons";
 import {
   INPUT_TYPES,
-  LIMITS,
   parseGithubRepo,
   validate,
   type FieldKey,
@@ -78,9 +78,6 @@ export function AnalyzeWorkspace() {
   const current = done.indexOf(false);
   const stepState = (i: number) => (done[i] ? "done" : i === current ? "current" : "todo");
 
-  const typeMeta = INPUT_TYPES.find((t) => t.value === values.type)!;
-  const textLen = values.text.trim().length;
-  const lineCount = values.text === "" ? 0 : values.text.split("\n").length;
   const repo = submitted ? parseGithubRepo(submitted.repoUrl) : null;
 
   return (
@@ -132,38 +129,13 @@ export function AnalyzeWorkspace() {
         </StepSection>
 
         <StepSection step={2} title="문서" state={stepState(1)}>
-          <div>
-            <label htmlFor="f-text" className="mb-1.5 block text-sm font-medium">
-              {typeMeta.label} 내용
-              <span className="ml-2 font-normal text-muted">{typeMeta.hint}</span>
-            </label>
-            <div
-              className={`overflow-hidden rounded-lg border bg-surface focus-within:border-accent ${
-                errors.text ? "border-bad" : "border-line-strong"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3 border-b border-line bg-sunken px-3 py-1.5 text-sm text-muted">
-                <span>{typeMeta.label}</span>
-                <span className="tabular-nums text-faint">
-                  {textLen.toLocaleString("ko-KR")} / {LIMITS.textMax.toLocaleString("ko-KR")}자
-                </span>
-              </div>
-              <textarea
-                id="f-text"
-                rows={14}
-                value={values.text}
-                onChange={(e) => update("text", e.target.value)}
-                onBlur={() => blur("text")}
-                aria-invalid={errors.text ? true : undefined}
-                aria-describedby={errors.text ? "e-text" : undefined}
-                className="block min-h-[22rem] w-full resize-y bg-transparent px-4 py-3 text-base leading-7 outline-none placeholder:text-faint sm:text-sm sm:leading-7"
-              />
-              <div className="border-t border-line bg-sunken px-3 py-1.5 text-xs tabular-nums text-faint">
-                {lineCount}줄
-              </div>
-            </div>
-            <FieldError id="e-text" message={errors.text} />
-          </div>
+          <DocumentEditor
+            kind={values.type}
+            value={values.text}
+            error={errors.text}
+            onChange={(v) => update("text", v)}
+            onBlur={() => blur("text")}
+          />
           <UploadPlaceholder />
         </StepSection>
 

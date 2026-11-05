@@ -1,10 +1,10 @@
 import { CheckIcon, InfoIcon, XCircleIcon } from "@/components/icons";
-import { STAGES, type RunStatus, type StageId, type StageState } from "@/lib/analysis";
+import { STAGES, type RunStatus, type StageId, type StageResult, type StageState } from "@/lib/analysis";
 
 type Props = {
   status: RunStatus;
   /** 단계별 상태. API 연결 후 서버 응답으로 채운다. */
-  stages?: Partial<Record<StageId, StageState>>;
+  stages?: Partial<Record<StageId, StageResult>>;
 };
 
 const STATE_LABEL: Record<StageState, string> = {
@@ -48,7 +48,8 @@ export function AnalysisPipeline({ status, stages = {} }: Props) {
       )}
       <ol className="px-4 py-3">
         {STAGES.map((s, i) => {
-          const state: StageState = unavailable ? "pending" : (stages[s.id] ?? "pending");
+          const result = unavailable ? undefined : stages[s.id];
+          const state: StageState = result?.state ?? "pending";
           const last = i === STAGES.length - 1;
           return (
             <li key={s.id} className={`relative flex gap-3 ${last ? "" : "pb-4"}`}>
@@ -66,6 +67,7 @@ export function AnalysisPipeline({ status, stages = {} }: Props) {
                   </p>
                 </div>
                 <p className="mt-0.5 text-sm text-faint">{s.description}</p>
+                {result?.error && <p className="mt-1 text-sm text-bad">{result.error}</p>}
               </div>
             </li>
           );
