@@ -24,10 +24,10 @@ export const EXTRACT_LIMITS = {
   ambiguityMax: 300,
 } as const;
 
-/** IP당 요청 빈도 제한 */
+/** IP당 AI 요청 빈도 제한. 추출과 비교가 함께 센다. (분석 한 번에 2회) */
 export const RATE_LIMIT = {
   windowMs: 10 * 60_000,
-  maxPerWindow: 8,
+  maxPerWindow: 12,
   maxConcurrentPerClient: 1,
   /** 서버 인스턴스 전체 상한 (1시간) */
   globalWindowMs: 60 * 60_000,

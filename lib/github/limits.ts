@@ -17,9 +17,9 @@ export type Limits = {
 };
 
 export const DEFAULT_LIMITS: Limits = {
-  maxFiles: 60,
+  maxFiles: 150,
   maxFileBytes: 100_000,
-  maxTotalBytes: 1_500_000,
+  maxTotalBytes: 3_000_000,
   maxArchiveBytes: 30_000_000,
   jsonTimeoutMs: 8_000,
   totalTimeoutMs: 25_000,

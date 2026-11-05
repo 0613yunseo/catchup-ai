@@ -31,6 +31,35 @@ export type Requirement = {
   reason: string;
   evidence: Evidence[];
   recommendation?: string;
+  // 아래는 코드 비교 결과에서 채워지는 선택 필드다. 기존 화면은 읽지 않아도 동작한다.
+  /** 요구사항의 구체적 구현 조건 */
+  description?: string;
+  /** 입력 문서에서 가져온 원문 근거 */
+  sourceQuote?: string;
+  decisionType?: "confirmed" | "suggestion" | "undecided";
+  changeType?: "new" | "changed" | "removed" | "unspecified";
+  /** 확인하지 못한 조건 */
+  missingConditions?: string[];
+  /** 서버가 판정을 정하거나 낮춘 이유 */
+  policyNote?: string;
+  /** 보지 못한 코드에 구현이 있을 수 있는지(수집 제한 등) */
+  coverageLimited?: boolean;
+  /** model: AI 판정을 검증해 사용 / policy: 서버 정책으로 결정 */
+  decidedBy?: "model" | "policy";
+  /** 이 요구사항을 비교할 때 AI에게 보여 준 파일 */
+  consideredFiles?: string[];
+};
+
+/** 코드 수집·비교 범위. complete가 false면 일부 파일을 보지 못한 분석이다. */
+export type ReportCoverage = {
+  complete: boolean;
+  totalFiles: number;
+  candidates: number;
+  collected: number;
+  limited: number;
+  /** 파일 선택 기준 설명 */
+  selection?: string;
+  warnings: string[];
 };
 
 export type Report = {
@@ -42,5 +71,8 @@ export type Report = {
   commitSha?: string;
   analyzedAt: string;
   documents?: SourceDocument[];
+  /** 비교에 사용한 AI 모델 */
+  model?: string;
+  coverage?: ReportCoverage;
   requirements: Requirement[];
 };

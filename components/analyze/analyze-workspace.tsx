@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { btnPrimary, btnSecondary } from "@/components/button-styles";
 import { AnalysisPipeline } from "@/components/analyze/analysis-pipeline";
+import { ComparisonResult } from "@/components/analyze/comparison-result";
 import { DocumentEditor } from "@/components/analyze/document-editor";
 import { ExtractionResult } from "@/components/analyze/extraction-result";
 import { GithubPanel } from "@/components/analyze/github-panel";
 import { StepSection } from "@/components/analyze/step-section";
 import { UploadPlaceholder } from "@/components/analyze/upload-placeholder";
+import { useComparison } from "@/components/analyze/use-comparison";
 import { useExtraction } from "@/components/analyze/use-extraction";
 import { useRepoInspection } from "@/components/analyze/use-repo-inspection";
 import type { StageResult } from "@/lib/analysis";
@@ -38,14 +40,26 @@ export function AnalyzeWorkspace() {
   const [errors, setErrors] = useState<FormErrors>({});
   const inspection = useRepoInspection(values.repoUrl);
   // 추출 결과는 이름·유형·문서가 같을 때만 보여 준다.
-  const extraction = useExtraction(JSON.stringify([values.name.trim(), values.type, values.text.trim()]));
+  const extractKey = JSON.stringify([values.name.trim(), values.type, values.text.trim()]);
+  const extraction = useExtraction(extractKey);
   const panelRef = useRef<HTMLDivElement>(null);
   const extractStatus = extraction.state.status;
+
+  // 코드 비교는 추출 결과와 GitHub 조회 결과(커밋 SHA)를 그대로 재사용한다. 둘 중 하나가 바뀌면 이전 비교 결과는 숨겨진다.
+  const extractedReqs = extraction.state.status === "success" ? extraction.state.data.requirements : null;
+  const commitSha = inspection.state.status === "success" ? inspection.state.data.repository.commitSha : undefined;
+  const comparison = useComparison(JSON.stringify([extractKey, values.repoUrl.trim(), commitSha ?? ""]));
+  const comparePanelRef = useRef<HTMLDivElement>(null);
+  const compareStatus = comparison.state.status;
 
   // 추출이 끝나면(성공·실패) 결과 영역으로 포커스를 옮긴다.
   useEffect(() => {
     if (extractStatus === "success" || extractStatus === "error") panelRef.current?.focus();
   }, [extractStatus]);
+
+  useEffect(() => {
+    if (compareStatus === "success" || compareStatus === "error") comparePanelRef.current?.focus();
+  }, [compareStatus]);
 
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     const next = { ...values, [key]: value };
@@ -68,6 +82,19 @@ export function AnalyzeWorkspace() {
       return;
     }
     void inspection.inspect();
+  }
+
+  const compareDisabledReason = !extractedReqs
+    ? "요구사항 추출을 먼저 완료하세요."
+    : extractedReqs.length === 0
+      ? "비교할 요구사항이 없습니다."
+      : !commitSha
+        ? "‘저장소 확인’으로 GitHub 저장소를 먼저 확인하세요. 확인한 커밋 기준으로 비교합니다."
+        : null;
+
+  function runCompare() {
+    if (!extractedReqs || !commitSha) return;
+    void comparison.run({ projectName: values.name.trim(), repoUrl: values.repoUrl.trim(), commitSha, requirements: extractedReqs });
   }
 
   function onSubmit(ev: FormEvent) {
@@ -100,6 +127,16 @@ export function AnalyzeWorkspace() {
         ? { state: "done" }
         : st.status === "error"
           ? { state: "error", error: st.error.message }
+          : undefined;
+
+  const cm = comparison.state;
+  const compareStage: StageResult | undefined =
+    cm.status === "loading"
+      ? { state: "running" }
+      : cm.status === "success"
+        ? { state: "done" }
+        : cm.status === "error"
+          ? { state: "error", error: cm.error.message }
           : undefined;
 
   const ex = extraction.state;
@@ -204,17 +241,28 @@ export function AnalyzeWorkspace() {
               {extractStatus === "loading" ? "추출 중…" : "분석 시작"}
             </button>
             <p className="text-sm text-faint">
-              AI가 문서에서 요구사항을 추출합니다. GitHub 코드 비교와 리포트 생성은 아직 연결되지 않았습니다.
+              분석 시작은 문서에서 요구사항을 추출합니다. 이어서 ‘코드 비교 실행’으로 GitHub 코드와 비교합니다.
             </p>
           </div>
 
           <ExtractionResult state={extraction.state} onRetry={extraction.retry} panelRef={panelRef} />
+
+          {extractedReqs && (
+            <ComparisonResult
+              state={comparison.state}
+              canRun={compareDisabledReason === null}
+              disabledReason={compareDisabledReason}
+              onRun={runCompare}
+              onRetry={comparison.retry}
+              panelRef={comparePanelRef}
+            />
+          )}
         </StepSection>
       </div>
 
       <aside aria-label="분석 정보" className="space-y-4 xl:sticky xl:top-6 xl:self-start">
         <GithubPanel repoUrl={values.repoUrl} state={inspection.state} onRetry={inspectRepo} />
-        <AnalysisPipeline status="unavailable" stages={{ github: githubStage, extract: extractStage }} />
+        <AnalysisPipeline status="unavailable" stages={{ github: githubStage, extract: extractStage, compare: compareStage }} />
       </aside>
     </form>
   );

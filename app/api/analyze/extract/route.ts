@@ -3,7 +3,7 @@ import { readConfig } from "@/lib/extract/config";
 import { extractRequirements } from "@/lib/extract/extract";
 import { EXTRACT_LIMITS, RATE_LIMIT } from "@/lib/extract/limits";
 import { createOpenAIClient } from "@/lib/extract/openai-client";
-import { createLimiter } from "@/lib/extract/rate-limit";
+import { clientKey, getSharedLimiter } from "@/lib/extract/shared-limiter";
 import { parseExtractRequest } from "@/lib/extract/request";
 import type { ExtractErrorInfo } from "@/lib/extract/types";
 
@@ -12,23 +12,13 @@ export const maxDuration = 60;
 const NO_STORE = { "Cache-Control": "no-store" };
 const MAX_BODY_CHARS = 80_000;
 
-// 서버 인스턴스 안에서만 유지되는 제한이다.
-const limiter = createLimiter(RATE_LIMIT);
+// 코드 비교 API와 같은 제한을 공유한다. 서버 인스턴스 안에서만 유지된다.
+const limiter = getSharedLimiter();
 
 function fail(error: ExtractErrorInfo) {
   const headers: Record<string, string> = { ...NO_STORE };
   if (error.retryAfterSec) headers["Retry-After"] = String(error.retryAfterSec);
   return Response.json({ ok: false, error }, { status: httpStatusFor(error.code), headers });
-}
-
-function clientKey(request: Request): string {
-  const h = request.headers;
-  return (
-    h.get("x-vercel-forwarded-for")?.split(",")[0].trim() ||
-    h.get("x-forwarded-for")?.split(",")[0].trim() ||
-    h.get("x-real-ip") ||
-    "unknown"
-  );
 }
 
 // GET: 설정 상태 확인. 키 값은 절대 반환하지 않고 설정 여부(true/false)만 알려 준다.

@@ -106,7 +106,7 @@ export function ExtractionResult({ state, onRetry, panelRef }: Props) {
             </ol>
           )}
           <p className="border-t border-line px-4 py-3 text-sm text-faint">
-            구현 여부는 아직 판정하지 않았습니다. GitHub 코드와의 비교와 리포트 생성은 다음 단계에서 연결됩니다.
+            이 단계에서는 구현 여부를 판정하지 않았습니다. 아래 ‘코드 비교’에서 GitHub 코드와 비교합니다.
           </p>
         </>
       )}
