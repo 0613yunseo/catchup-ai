@@ -218,6 +218,7 @@ npm run dev                  # http://localhost:3000
 | `OPENAI_API_KEY` | 요구사항 추출·변경 탐지·코드 비교에 필요 | OpenAI API 키. 없으면 AI 기능은 가짜 결과 없이 설정 오류를 반환합니다. |
 | `OPENAI_MODEL` | 선택 | 사용할 모델 이름. 비우면 `gpt-5-mini` |
 | `GITHUB_TOKEN` | 선택 | GitHub API 요청 한도(인증 없이 시간당 60회)가 부족할 때만 사용. 권한 없는 토큰이면 충분합니다. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 선택 (준비 중) | Supabase Auth·분석 기록 저장을 위한 공개 값. 현재 기능에서는 사용하지 않으며 비워 두어도 모든 기능이 동작합니다. `service_role`·secret 키는 넣지 않습니다. |
 
 ## 명령어와 테스트
 
