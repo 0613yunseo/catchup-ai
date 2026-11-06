@@ -75,11 +75,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 예시 리포트. 파란 면은 이 블록에만 깔리고, 위 히어로와는 간격을 둔다. */}
-        <div className="relative mt-14 sm:mt-16">
-          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 top-0 bg-accent-soft" />
-          <div className="relative mx-auto w-full max-w-6xl px-4 pb-14 pt-3 sm:px-6 sm:pb-20">
-            <ProductPreview />
+        {/* 예시 리포트. 카드는 위로 올리고 파란 면은 카드 윗부분부터 아래로 내려, 카드가 파란 면 위에 걸쳐 떠 있게 한다. */}
+        <div className="relative mt-16 sm:mt-20">
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 top-8 bg-accent-soft sm:top-12 lg:top-16" />
+          <div className="relative mx-auto w-full max-w-6xl px-4 pb-14 sm:px-6 sm:pb-20">
+            <div className="rounded-xl shadow-[0_24px_48px_-28px_rgb(15_23_42/0.3)]">
+              <ProductPreview />
+            </div>
           </div>
         </div>
       </section>
