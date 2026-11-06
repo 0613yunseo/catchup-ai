@@ -5,6 +5,7 @@ import { ChangeStrip } from "@/components/report/change-strip";
 import { CoverageNotice } from "@/components/report/coverage-notice";
 import { EmptyWorkspace, type EmptyReason } from "@/components/report/empty-workspace";
 import { ReportHeader } from "@/components/report/report-header";
+import { SaveToCloud } from "@/components/report/save-to-cloud";
 import { RequirementDetail } from "@/components/report/requirement-detail";
 import { RequirementList } from "@/components/report/requirement-list";
 import { SummaryStrip } from "@/components/report/summary-strip";
@@ -19,9 +20,13 @@ type Props = {
   /** report가 없을 때 이유. 기본은 저장된 결과 없음 */
   emptyReason?: EmptyReason;
   onClear?: () => void;
+  /** 클라우드에 저장된 기록을 보는 중이면 저장 시각. 이때는 저장 버튼 대신 안내를 보여 준다. */
+  cloud?: { createdAt: string };
+  /** 로그인 후 복구한 리포트에서 저장 확인 안내를 바로 띄운다. */
+  autoPrompt?: boolean;
 };
 
-export function ReportWorkspace({ report, emptyReason = "none", onClear }: Props) {
+export function ReportWorkspace({ report, emptyReason = "none", onClear, cloud, autoPrompt }: Props) {
   const [filter, setFilter] = useState<Status | null>(null);
   const [kindFilter, setKindFilter] = useState<ChangeKind | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -38,6 +43,12 @@ export function ReportWorkspace({ report, emptyReason = "none", onClear }: Props
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-8 sm:py-10">
       <ReportHeader report={report} />
+      {report && cloud && (
+        <p className="-mt-3 mb-5 text-sm text-muted">
+          클라우드에 저장된 기록입니다 · 저장 {new Date(cloud.createdAt).toLocaleString("ko-KR")}. 저장된 내용을 그대로 보여 주며 AI를 다시 호출하지 않습니다.
+        </p>
+      )}
+      {report && !cloud && <SaveToCloud report={report} autoPrompt={autoPrompt} />}
       <SummaryStrip summary={report ? summarize(reqs) : null} filter={filter} onFilter={setFilter} />
       {report && hasChanges && <ChangeStrip items={reqs} filter={kindFilter} onFilter={setKindFilter} />}
       {report && <CoverageNotice report={report} />}
