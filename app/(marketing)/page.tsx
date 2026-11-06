@@ -14,14 +14,15 @@ const FLOW = [
 ];
 
 const SCOPE = [
-  { label: "입력 화면과 검증", done: true },
-  { label: "AI 요구사항 추출", done: true },
-  { label: "GitHub 저장소 조회와 코드 수집", done: true },
-  { label: "AI 코드 비교와 근거 검증", done: true },
-  { label: "분석 리포트 화면", done: true },
-  { label: "문서 파일 업로드 (PDF·DOCX·TXT)", done: true },
-  { label: "이전·최신 회의록 변경 비교", done: true },
-  { label: "분석 기록 저장", done: false },
+  { label: "AI 요구사항 추출 및 결정 상태 분류", done: true },
+  { label: "이전·최신 회의록 변경사항 비교", done: true },
+  { label: "공개 GitHub 저장소 확인 및 코드 수집", done: true },
+  { label: "AI 코드 비교 및 원문·코드 근거 검증", done: true },
+  { label: "PDF·DOCX·TXT 다중 파일 첨부", done: true },
+  { label: "분석 리포트 및 판정 결과 확인", done: true },
+  { label: "새 분석 초기화 및 입력 검증", done: true },
+  { label: "Supabase 이메일 로그인 및 계정별 기록 관리", done: true },
+  { label: "클라우드 분석 기록 저장·조회·삭제", done: true },
 ];
 
 const TONE: Record<(typeof STATUSES)[number], string> = {
@@ -130,7 +131,7 @@ export default function Home() {
               먼저 입력부터 시작해 보세요
             </h2>
             <p className="mt-4 max-w-md opacity-90">
-              프로젝트 이름, 문서, 공개 저장소 주소만 있으면 됩니다.
+              프로젝트 이름과 회의록을 입력하거나 파일로 첨부하고, 공개 GitHub 저장소를 확인하면 AI 분석을 시작할 수 있습니다.
             </p>
             <NewAnalysisLink className={`${btnOnAccent} mt-8`}>
               분석 시작
