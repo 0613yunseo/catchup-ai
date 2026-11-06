@@ -34,10 +34,8 @@ export default function Home() {
   return (
     <>
       <section className="relative">
-        {/* 제품 프리뷰 뒤의 파란 면 */}
-        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 top-[58%] bg-accent-soft" />
-        <div className="relative mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6 sm:pt-12 lg:pt-14">
-          <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6 sm:pt-12 lg:pt-14">
+          <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-10">
             <div>
               <h1 className="max-w-4xl text-4xl font-semibold leading-[1.15] tracking-tight sm:text-5xl lg:text-6xl lg:leading-[1.1]">
                 회의에서 정한 것,
@@ -57,27 +55,30 @@ export default function Home() {
                 </Link>
               </div>
               <p className="mt-4 text-sm text-faint">
-                공개 GitHub 저장소를 정적으로 분석합니다. 아래 리포트 화면은 예시이며, 실제 결과는 분석을 마친 뒤 같은 브라우저 탭에서 볼 수 있습니다.
+                공개 GitHub 저장소의 코드를 분석하고, 결과를 근거와 함께 확인할 수 있습니다.
               </p>
             </div>
-            <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-              {/* 뒤에서 은은하게 번지는 파란 빛 */}
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 rounded-full bg-accent/20 blur-3xl"
-              />
+            {/* 이미지는 텍스트보다 작고 오른쪽에 둔다. 모바일에서는 텍스트·버튼 아래에 놓인다. */}
+            <div className="relative isolate mx-auto w-full max-w-xs bg-canvas sm:max-w-sm lg:mr-0 lg:max-w-[25rem] lg:justify-self-end lg:translate-x-5">
+              {/* 뒤에서 은은하게 번지는 파란 빛. 래퍼를 isolate + 배경색으로 두어 이미지의 흰 바탕이 다크 모드에서 배경색과 섞이게 한다(mix-blend-multiply). */}
+              <div aria-hidden="true" className="absolute inset-0 rounded-full bg-[light-dark(rgb(37_99_235/0.2),rgb(96_165_250/0.55))] blur-3xl" />
               <Image
                 src="/gpu-hero.png"
                 alt="노트북 화면과 떠 있는 유리 패널로 표현한 회의 내용과 코드 비교 이미지"
                 width={512}
                 height={512}
                 priority
-                sizes="(min-width: 1024px) 440px, 100vw"
-                className="relative h-auto w-full object-contain [mask-image:radial-gradient(closest-side,#000_72%,transparent_100%)] [-webkit-mask-image:radial-gradient(closest-side,#000_72%,transparent_100%)]"
+                sizes="(min-width: 1024px) 400px, 320px"
+                className="relative h-auto w-full object-contain mix-blend-multiply [mask-image:radial-gradient(closest-side,#000_72%,transparent_100%)] [-webkit-mask-image:radial-gradient(closest-side,#000_72%,transparent_100%)]"
               />
             </div>
           </div>
-          <div className="mt-12 pb-14 sm:pb-20">
+        </div>
+
+        {/* 예시 리포트. 파란 면은 이 블록에만 깔리고, 위 히어로와는 간격을 둔다. */}
+        <div className="relative mt-14 sm:mt-16">
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 top-0 bg-accent-soft" />
+          <div className="relative mx-auto w-full max-w-6xl px-4 pb-14 pt-3 sm:px-6 sm:pb-20">
             <ProductPreview />
           </div>
         </div>
