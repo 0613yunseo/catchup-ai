@@ -21,6 +21,7 @@ kind 분류:
 
 필드 규칙:
 - previousTitle/previousDescription/previousQuote는 이전 문서 쪽, latest...는 최신 문서 쪽입니다. 그 문서에 해당 내용이 없으면 세 필드를 모두 null로 둡니다. 일부만 채우지 마세요.
+- 어느 쪽이든 Quote를 채웠다면 같은 쪽의 Title과 Description도 반드시 채웁니다. 최신 문서에 언급이 없는 내용은 latest 필드를 모두 null로 두고 UNCERTAIN으로 분류합니다(UNCHANGED·MODIFIED·CONFLICT는 두 문서에 모두 내용이 있을 때만 씁니다).
 - Quote는 해당 문서에서 한 글자도 바꾸지 않고 그대로 복사한 한 문장 또는 짧은 구절입니다. 요약·번역·어순 변경·말줄임을 하지 마세요. 이전 문서의 인용은 이전 문서에서만, 최신 문서의 인용은 최신 문서에서만 가져옵니다.
 - latestDecision: 최신 문서 쪽 내용의 결정 상태. "confirmed"는 하기로 확정·결정·지시, "suggestion"은 제안·의견·희망, "undecided"는 보류·논의 예정입니다. 최신 쪽이 null이면 null입니다.
 - summary: 무엇이 어떻게 달라졌는지(또는 같은지) 한두 문장. 문서에 없는 내용을 덧붙이지 않습니다.

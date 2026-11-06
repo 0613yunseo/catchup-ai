@@ -44,6 +44,8 @@ export type DiffResponse = {
   /** 코드 비교에 그대로 보낼 요구사항. items와 같은 id·같은 순서이다. */
   requirements: ExtractedRequirement[];
   counts: Record<ChangeKind, number>;
+  /** 서버 검증 결과. rejected: 원문 인용을 확인하지 못해 결과에서 뺀 항목 수, repaired: 비어 있던 제목·설명을 인용문으로 채운 항목 수 */
+  quality: { rejected: number; repaired: number };
   /** ISO 8601 */
   diffedAt: string;
   model: string;

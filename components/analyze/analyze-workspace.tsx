@@ -55,7 +55,9 @@ export function AnalyzeWorkspace() {
   const diffData = diff.state.status === "success" ? diff.state.data : null;
   const extractedReqs = diffMode ? (diffData?.requirements ?? null) : extraction.state.status === "success" ? extraction.state.data.requirements : null;
   const commitSha = inspection.state.status === "success" ? inspection.state.data.repository.commitSha : undefined;
-  const comparison = useComparison(JSON.stringify([extractKey, values.repoUrl.trim(), commitSha ?? ""]));
+  // 같은 입력으로 추출·변경 분석을 다시 실행하면 결과가 달라질 수 있으므로, 결과 생성 시각도 키에 넣어 이전 비교 결과가 새 요구사항에 남지 않게 한다.
+  const resultId = diffMode ? (diffData?.diffedAt ?? "") : extraction.state.status === "success" ? extraction.state.data.extractedAt : "";
+  const comparison = useComparison(JSON.stringify([extractKey, values.repoUrl.trim(), commitSha ?? "", resultId]));
   const comparePanelRef = useRef<HTMLDivElement>(null);
   const compareStatus = comparison.state.status;
 

@@ -5,7 +5,7 @@ import { runStage, type Budget } from "../compare/model.ts";
 import type { ResponsesClient } from "../extract/extract.ts";
 import { DIFF_LIMITS as L } from "./limits.ts";
 import { DIFF_INSTRUCTIONS, buildDiffInput } from "./prompt.ts";
-import { DIFF_SCHEMA, DIFF_SCHEMA_NAME, validateDiff } from "./schema.ts";
+import { DIFF_SCHEMA, DIFF_SCHEMA_NAME, validateDiffDetailed } from "./schema.ts";
 import { toRequirements } from "./to-requirements.ts";
 import { CHANGE_KINDS, type ChangeKind, type DiffRequest, type DiffResponse } from "./types.ts";
 
@@ -34,14 +34,14 @@ export async function detectChanges(req: DiffRequest, deps: DiffDeps): Promise<D
     modelMs: 0,
   };
 
-  const items = await runStage(deps.client, deps.model, budget, {
+  const { items, rejected, repaired } = await runStage(deps.client, deps.model, budget, {
     schemaName: DIFF_SCHEMA_NAME,
     effort: "low",
     schema: DIFF_SCHEMA,
     instructions: DIFF_INSTRUCTIONS,
     maxOutputTokens: L.maxOutputTokens,
     build: (feedback) => buildDiffInput(req, delimiter, feedback),
-    validate: (parsed) => validateDiff(parsed, req),
+    validate: (parsed) => validateDiffDetailed(parsed, req),
   });
 
   const counts = Object.fromEntries(CHANGE_KINDS.map((k) => [k, 0])) as Record<ChangeKind, number>;
@@ -52,6 +52,7 @@ export async function detectChanges(req: DiffRequest, deps: DiffDeps): Promise<D
     items,
     requirements: toRequirements(items),
     counts,
+    quality: { rejected, repaired },
     diffedAt: new Date(now()).toISOString(),
     model: deps.model,
     usage: {

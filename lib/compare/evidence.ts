@@ -33,7 +33,7 @@ export function verifyEvidence(
   files: Map<string, SourceFile>,
 ): EvidenceCheck {
   const e = (raw ?? {}) as Record<string, unknown>;
-  const { path, startLine, endLine, quote } = e;
+  const { path, startLine, endLine, quote, role } = e;
   if (typeof path !== "string" || typeof quote !== "string") return { ok: false, reason: "형식이 올바르지 않습니다." };
 
   const file = files.get(path);
@@ -64,5 +64,6 @@ export function verifyEvidence(
   if (end - start + 1 > L.evidenceMaxLines) return { ok: false, reason: `근거 범위가 ${L.evidenceMaxLines}줄을 넘습니다.` };
   const snippet = lines.slice(start - 1, end).join("\n");
   if (snippet.length > L.evidenceMaxChars) return { ok: false, reason: "근거 코드가 너무 깁니다." };
-  return { ok: true, adjusted, evidence: { path, startLine: start, endLine: end, snippet, language: file.language } };
+  const r = role === "direct" || role === "partial" || role === "context" ? role : undefined;
+  return { ok: true, adjusted, evidence: { path, startLine: start, endLine: end, snippet, language: file.language, ...(r ? { role: r } : {}) } };
 }

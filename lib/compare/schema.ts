@@ -49,12 +49,13 @@ export const VERDICT_SCHEMA = {
             items: {
               type: "object",
               additionalProperties: false,
-              required: ["path", "startLine", "endLine", "quote"],
+              required: ["path", "startLine", "endLine", "quote", "role"],
               properties: {
                 path: { type: "string" },
                 startLine: { type: "integer" },
                 endLine: { type: "integer" },
                 quote: { type: "string" },
+                role: { type: "string", enum: ["direct", "partial", "context"] },
               },
             },
           },

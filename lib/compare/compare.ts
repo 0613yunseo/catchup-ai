@@ -235,7 +235,7 @@ export async function compareRequirements(req: ParsedCompareRequest, deps: Compa
             seen.add(key);
             evidence.push(v.adjusted ? { ...v.evidence, adjusted: true } : v.evidence);
           }
-          const pol = applyPolicy({ requirement: r, status: d.status as Status, evidence, rejected, coverageComplete: complete });
+          const pol = applyPolicy({ requirement: r, status: d.status as Status, evidence, missingConditions: d.missingConditions, rejected, coverageComplete: complete });
           const missing = [...d.missingConditions];
           if (limited && pol.status !== "VERIFIED") {
             missing.push(

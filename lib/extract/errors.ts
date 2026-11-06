@@ -3,20 +3,20 @@ import type { ExtractErrorCode, ExtractErrorInfo } from "./types.ts";
 export const MESSAGES: Record<ExtractErrorCode, string> = {
   INVALID_REQUEST: "요청 형식이 올바르지 않습니다. 프로젝트 이름, 문서 유형, 문서 내용을 확인해 주세요.",
   INPUT_TOO_LONG: "문서가 너무 깁니다. 길이를 줄여서 다시 시도해 주세요.",
-  NOT_CONFIGURED: "서버에 OpenAI API 키가 설정되지 않아 요구사항을 추출할 수 없습니다. 관리자에게 문의하세요.",
-  AUTH_FAILED: "OpenAI 인증에 실패했습니다. 서버의 API 키 또는 모델 접근 권한을 확인해야 합니다.",
-  QUOTA_EXCEEDED: "OpenAI 사용 한도를 모두 사용했습니다. 관리자에게 문의하세요.",
-  RATE_LIMITED: "OpenAI 요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해 주세요.",
+  NOT_CONFIGURED: "AI 분석 기능이 아직 준비되지 않아 사용할 수 없습니다. 서비스 관리자에게 문의해 주세요.",
+  AUTH_FAILED: "AI 분석 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요. 계속되면 서비스 관리자에게 문의해 주세요.",
+  QUOTA_EXCEEDED: "현재 AI 분석 사용량이 한도에 도달해 분석할 수 없습니다. 잠시 후 다시 시도하거나 서비스 관리자에게 문의해 주세요.",
+  RATE_LIMITED: "AI 요청이 많아 잠시 제한되었습니다. 잠시 후 다시 시도해 주세요.",
   BUSY: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.",
-  MODEL_UNAVAILABLE: "AI 모델 서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도해 주세요.",
-  MODEL_NOT_FOUND: "설정된 AI 모델을 사용할 수 없습니다. 모델 이름과 접근 권한을 확인해야 합니다.",
+  MODEL_UNAVAILABLE: "AI 분석 서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도해 주세요.",
+  MODEL_NOT_FOUND: "AI 분석 서비스 설정에 문제가 있어 분석할 수 없습니다. 서비스 관리자에게 문의해 주세요.",
   TIMEOUT: "AI 응답이 너무 오래 걸려 중단했습니다. 문서를 줄이거나 다시 시도해 주세요.",
   NETWORK: "AI 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-  MODEL_REFUSED: "AI가 이 문서의 분석을 거부했습니다. 내용을 확인해 주세요.",
-  OUTPUT_TRUNCATED: "문서에서 추출할 내용이 너무 많아 AI 응답이 잘렸습니다. 문서를 나눠서 시도해 주세요.",
+  MODEL_REFUSED: "AI가 이 내용의 분석을 거부했습니다. 문서 내용을 확인한 뒤 다시 시도해 주세요.",
+  OUTPUT_TRUNCATED: "분석할 내용이 많아 AI 응답이 중간에 끊겼습니다. 문서를 나누거나 길이를 줄여 다시 시도해 주세요.",
   INVALID_OUTPUT:
-    "AI가 원문과 일치하는 올바른 결과를 만들지 못해 결과를 사용하지 않았습니다. 다시 시도해 주세요.",
-  INTERNAL: "요구사항을 추출하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+    "AI가 원문과 일치하는 결과를 만들지 못해 이번 결과를 사용하지 않았습니다. 같은 입력으로 다시 시도하면 다른 결과가 나올 수 있습니다.",
+  INTERNAL: "분석하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
 export class ExtractError extends Error {

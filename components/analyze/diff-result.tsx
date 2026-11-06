@@ -71,6 +71,12 @@ export function DiffResult({ state, onRetry, panelRef }: Props) {
 
       {state.status === "success" && (
         <>
+          {state.data.quality.rejected > 0 && (
+            <p role="status" className="flex items-start gap-2 border-b border-line bg-warn-soft px-4 py-3 text-sm text-warn">
+              <InfoIcon className="mt-0.5 size-4 shrink-0" />
+              AI가 제시한 항목 {state.data.quality.rejected}건은 원문 인용을 확인하지 못해 결과에서 뺐습니다. 빠진 내용이 있을 수 있으니 필요하면 다시 분석해 주세요.
+            </p>
+          )}
           <ul className="flex flex-wrap gap-2 border-b border-line px-4 py-3" aria-label="변경 유형별 개수">
             {CHANGE_KINDS.map((k) => (
               <li key={k} className="text-xs text-muted">

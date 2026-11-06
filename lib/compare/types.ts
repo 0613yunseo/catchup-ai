@@ -15,6 +15,8 @@ export type CodeEvidence = {
   language: string;
   /** AI가 제시한 줄 범위가 어긋나 서버가 실제 코드 위치에 맞게 넓혔으면 true */
   adjusted?: boolean;
+  /** AI가 스스로 밝힌 근거의 성격. direct: 핵심 동작을 직접 수행하는 코드 / partial: 일부 조건만 / context: 배경·참고 */
+  role?: "direct" | "partial" | "context";
 };
 
 export type RequirementVerdict = {

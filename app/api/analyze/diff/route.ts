@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     // 문서 내용과 키는 기록하지 않는다. 개수와 사용량만 남긴다.
     console.info(
       "diff.ok",
-      JSON.stringify({ model: result.model, items: result.items.length, counts: result.counts, calls: result.usage.attempts, tokens: result.usage.totalTokens, ms: result.usage.durationMs }),
+      JSON.stringify({ model: result.model, items: result.items.length, counts: result.counts, rejected: result.quality.rejected, repaired: result.quality.repaired, calls: result.usage.attempts, tokens: result.usage.totalTokens, ms: result.usage.durationMs }),
     );
     return Response.json({ ok: true, data: result }, { headers: NO_STORE });
   } catch (e) {
