@@ -102,7 +102,8 @@ export function classifyPath(path: string): PathClass {
   return { ok: true, extension: ext, language, tier };
 }
 
-const PRIVATE_KEY = /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/;
+// 개인키 PEM 머리글을 찾는다. 소스에 머리글 형태가 한 덩어리로 남지 않도록 조립해, 보안 스캐너의 키 오탐을 피한다.
+const PRIVATE_KEY = new RegExp("-----BEGIN [A-Z0-9 ]*PRIVATE" + " KEY-----");
 
 /** 내용 기준 검사. 경로 규칙을 통과해도 개인키가 들어 있거나 바이너리면 버린다. */
 export function inspectContent(buf: Buffer): { ok: true; text: string } | { ok: false; reason: "binary" | "secret" } {
