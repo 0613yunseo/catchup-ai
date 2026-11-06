@@ -37,7 +37,7 @@ export function ProductPreview() {
           </span>
         </div>
 
-        <div className="grid divide-line md:grid-cols-[1fr_1fr_1.3fr] md:divide-x">
+        <div className="grid divide-y divide-line lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.3fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,36rem)] lg:divide-x lg:divide-y-0">
           {/* 1. 문서 */}
           <div className="p-5">
             <p className="text-sm font-semibold">회의록</p>
@@ -72,8 +72,8 @@ export function ProductPreview() {
           </div>
 
           {/* 3. 코드 근거 */}
-          <div className="space-y-3 p-5">
-            <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0 space-y-3 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold">코드 근거 · R-1</p>
               <StatusBadge status="VERIFIED" />
             </div>
