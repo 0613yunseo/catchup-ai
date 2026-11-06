@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { btnPrimary, btnSecondary } from "@/components/button-styles";
 import { AnalysisPipeline } from "@/components/analyze/analysis-pipeline";
+import { AttachmentPanel } from "@/components/analyze/attachment-panel";
 import { ComparisonResult } from "@/components/analyze/comparison-result";
 import { DiffResult } from "@/components/analyze/diff-result";
 import { DocumentEditor } from "@/components/analyze/document-editor";
 import { ExtractionResult } from "@/components/analyze/extraction-result";
 import { GithubPanel } from "@/components/analyze/github-panel";
 import { StepSection } from "@/components/analyze/step-section";
-import { UploadPanel } from "@/components/analyze/upload-panel";
+import { useAttachments } from "@/components/analyze/use-attachments";
 import { useComparison } from "@/components/analyze/use-comparison";
 import { useDiff } from "@/components/analyze/use-diff";
 import { useExtraction } from "@/components/analyze/use-extraction";
 import { useRepoInspection } from "@/components/analyze/use-repo-inspection";
 import type { StageResult } from "@/lib/analysis";
 import { attachChanges } from "@/lib/diff/to-report";
+import { composeDocument } from "@/lib/document/attachments";
+import { NEW_ANALYSIS_EVENT, resetAnalysisActivity, setAnalysisActivity } from "@/lib/new-analysis";
 import {
   INPUT_TYPES,
   validate,
@@ -27,25 +30,61 @@ import {
 const INITIAL: FormValues = { name: "", type: "meeting", text: "", repoUrl: "", mode: "single", previousText: "" };
 const ORDER: FieldKey[] = ["name", "previousText", "text", "repoUrl"];
 
+const FILE_BUSY = "파일 추출이 끝난 뒤 분석을 시작해 주세요.";
+const GATE_NOT_CLICKED = "분석을 시작하기 전에 저장소 확인 버튼을 눌러주세요.";
+
 const inputCls =
   "w-full scroll-mt-24 rounded-md border border-line-strong bg-surface px-3 py-2 text-base text-fg placeholder:text-faint aria-[invalid=true]:border-bad sm:text-sm";
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? (
-    <p id={id} className="mt-1.5 text-sm text-bad">
+    <p id={id} role="alert" className="mt-1.5 text-sm text-bad">
       {message}
     </p>
   ) : null;
 }
 
+// 새 분석이 요청되면 세션 번호를 올려 분석 화면을 통째로 새로 만든다.
+// 입력, 첨부, 결과, 진행 중이던 요청(화면이 사라질 때 취소됨)이 모두 없어지고, 취소된 요청의 늦은 응답은 반영되지 않는다.
 export function AnalyzeWorkspace() {
+  const [session, setSession] = useState(0);
+  useEffect(() => {
+    const onNew = () => setSession((n) => n + 1);
+    window.addEventListener(NEW_ANALYSIS_EVENT, onNew);
+    return () => window.removeEventListener(NEW_ANALYSIS_EVENT, onNew);
+  }, []);
+  return <AnalyzeSession key={session} fresh={session > 0} />;
+}
+
+type Flags = Partial<Record<FieldKey, boolean>>;
+
+function AnalyzeSession({ fresh }: { fresh: boolean }) {
   const [values, setValues] = useState<FormValues>(INITIAL);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [uploadStage, setUploadStage] = useState<StageResult | undefined>(undefined);
+  // 오류 문구는 저장하지 않고 현재 입력에서 계산한다. flagged는 사용자가 확인을 시도했거나 입력란을 벗어난 항목이다.
+  const [flagged, setFlagged] = useState<Flags>({});
+  const [gateAttempted, setGateAttempted] = useState(false);
   const inspection = useRepoInspection(values.repoUrl);
   const diffMode = values.mode === "diff";
-  // 추출·변경 비교 결과는 방식·이름·유형·문서가 같을 때만 보여 준다.
-  const extractKey = JSON.stringify([values.mode, values.name.trim(), values.type, values.text.trim(), diffMode ? (values.previousText ?? "").trim() : ""]);
+  const repoVerified = inspection.state.status === "success";
+
+  // 직접 입력과 첨부파일 텍스트를 합친 문서가 분석·검증·결과 키의 기준이다. 영역(이전/최신)마다 파일 목록이 따로 있다.
+  const latestFiles = useAttachments(() => values.text);
+  const prevFiles = useAttachments(() => values.previousText ?? "");
+  const latestDoc = useMemo(() => composeDocument(values.text, latestFiles.ready), [values.text, latestFiles.ready]);
+  const prevDoc = useMemo(() => composeDocument(values.previousText ?? "", prevFiles.ready), [values.previousText, prevFiles.ready]);
+  const effective = useMemo<FormValues>(
+    () => ({ ...values, text: latestDoc.text, previousText: diffMode ? prevDoc.text : "" }),
+    [values, latestDoc.text, prevDoc.text, diffMode],
+  );
+
+  // 추출·변경 비교 결과는 방식·이름·유형·합친 문서가 같을 때만 보여 준다. 파일을 추가·삭제하면 합친 문서가 바뀌어 이전 결과는 숨겨진다.
+  const extractKey = JSON.stringify([
+    effective.mode,
+    effective.name.trim(),
+    effective.type,
+    effective.text.trim(),
+    diffMode ? (effective.previousText ?? "").trim() : "",
+  ]);
   const extraction = useExtraction(extractKey);
   const diff = useDiff(extractKey);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -61,6 +100,11 @@ export function AnalyzeWorkspace() {
   const comparePanelRef = useRef<HTMLDivElement>(null);
   const compareStatus = comparison.state.status;
 
+  // 새 분석으로 시작했으면 첫 입력란에 포커스를 둔다.
+  useEffect(() => {
+    if (fresh) document.getElementById("f-name")?.focus();
+  }, [fresh]);
+
   // 추출이 끝나면(성공·실패) 결과 영역으로 포커스를 옮긴다.
   useEffect(() => {
     if (extractStatus === "success" || extractStatus === "error") panelRef.current?.focus();
@@ -70,23 +114,42 @@ export function AnalyzeWorkspace() {
     if (compareStatus === "success" || compareStatus === "error") comparePanelRef.current?.focus();
   }, [compareStatus]);
 
+  // 입력 검증 결과(합친 문서 기준). 파일 추출이 끝나지 않았으면 분석을 시작할 수 없다.
+  const found = useMemo(() => {
+    const f = validate(effective);
+    if (latestFiles.busy && !f.text) f.text = FILE_BUSY;
+    if (diffMode && prevFiles.busy && !f.previousText) f.previousText = FILE_BUSY;
+    return f;
+  }, [effective, latestFiles.busy, prevFiles.busy, diffMode]);
+  const errors: FormErrors = Object.fromEntries(
+    (Object.keys(found) as FieldKey[]).filter((k) => flagged[k]).map((k) => [k, found[k]]),
+  );
+
+  // 저장소 확인을 거치지 않았으면 분석을 시작할 수 없다. 확인에 성공하면 이 안내는 저절로 사라진다.
+  const repoGate =
+    gateAttempted && !found.repoUrl && !repoVerified
+      ? inspection.state.status === "loading"
+        ? "저장소 확인이 끝난 뒤 분석을 시작해 주세요."
+        : inspection.state.status === "error"
+          ? "저장소 확인에 실패했습니다. 주소를 확인한 뒤 저장소 확인 버튼을 다시 눌러주세요."
+          : GATE_NOT_CLICKED
+      : undefined;
+  const repoError = errors.repoUrl ?? repoGate;
+
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
-    const next = { ...values, [key]: value };
-    setValues(next);
-    if (key !== "type" && errors[key as FieldKey]) {
-      setErrors((e) => ({ ...e, [key]: validate(next)[key as FieldKey] }));
-    }
+    // 저장소 주소를 확인한 뒤 바꾸면 이전 확인 결과는 무효이므로 다시 확인하도록 안내한다.
+    if (key === "repoUrl" && repoVerified && String(value).trim() !== values.repoUrl.trim()) setGateAttempted(true);
+    setValues((v) => ({ ...v, [key]: value }));
   }
 
   function blur(key: FieldKey) {
-    setErrors((e) => ({ ...e, [key]: validate(values)[key] }));
+    setFlagged((f) => ({ ...f, [key]: true }));
   }
 
   // GitHub 저장소 확인: 저장소 주소만 검증하고 실제 조회를 요청한다.
   function inspectRepo() {
-    const err = validate(values).repoUrl;
-    setErrors((e) => ({ ...e, repoUrl: err }));
-    if (err) {
+    setFlagged((f) => ({ ...f, repoUrl: true }));
+    if (found.repoUrl) {
       document.getElementById("f-repoUrl")?.focus();
       return;
     }
@@ -112,30 +175,49 @@ export function AnalyzeWorkspace() {
 
   function onSubmit(ev: FormEvent) {
     ev.preventDefault();
-    const found = validate(values);
-    setErrors(found);
+    setFlagged({ name: true, previousText: true, text: true, repoUrl: true });
     const first = ORDER.find((k) => found[k]);
     if (first) {
       document.getElementById(`f-${first}`)?.focus();
       return;
     }
-    if (diffMode) void diff.run({ projectName: values.name, previousText: values.previousText ?? "", latestText: values.text });
-    else void extraction.run({ projectName: values.name, documentType: values.type, text: values.text });
+    // 확인되지 않은 저장소로는 분석을 시작하지 않는다. (문서에서 요구사항을 뽑는 API 자체는 저장소와 무관하게 쓸 수 있다)
+    if (!repoVerified) {
+      setGateAttempted(true);
+      document.getElementById("f-repoUrl")?.focus();
+      return;
+    }
+    if (diffMode) void diff.run({ projectName: effective.name, previousText: effective.previousText ?? "", latestText: effective.text });
+    else void extraction.run({ projectName: effective.name, documentType: effective.type, text: effective.text });
   }
 
   // 단계 완료는 입력값이 검증을 통과하는지로만 판단한다.
-  const found = validate(values);
   const done = [
-    values.name.trim() !== "" && !found.name,
-    values.text.trim() !== "" && !found.text && (!diffMode || ((values.previousText ?? "").trim() !== "" && !found.previousText)),
-    values.repoUrl.trim() !== "" && !found.repoUrl,
+    effective.name.trim() !== "" && !found.name,
+    effective.text.trim() !== "" && !found.text && (!diffMode || ((effective.previousText ?? "").trim() !== "" && !found.previousText)),
+    effective.repoUrl.trim() !== "" && !found.repoUrl,
   ];
   const current = done.indexOf(false);
   const stepState = (i: number) => (done[i] ? "done" : i === current ? "current" : "todo");
 
-  // 문서 확인 단계: 파일 처리 중·실패는 업로드 결과를, 그 외에는 입력 문서가 검증을 통과했는지를 따른다.
-  const documentStage: StageResult | undefined =
-    uploadStage ?? (done[1] ? { state: "done" } : undefined);
+  // 문서 확인 단계: 파일 추출 중이면 진행 중, 그 외에는 합친 문서가 검증을 통과했는지를 따른다.
+  const filesBusy = latestFiles.busy || (diffMode && prevFiles.busy);
+  const documentStage: StageResult | undefined = filesBusy ? { state: "running" } : done[1] ? { state: "done" } : undefined;
+
+  // 다른 화면의 ‘새 분석’ 링크가 확인 여부를 판단할 수 있도록 현재 활동 상태를 알려 준다.
+  const dirty =
+    values.name.trim() !== "" ||
+    values.text.trim() !== "" ||
+    (values.previousText ?? "").trim() !== "" ||
+    values.repoUrl.trim() !== "" ||
+    latestFiles.items.length > 0 ||
+    prevFiles.items.length > 0;
+  const busy = extractStatus === "loading" || inspection.state.status === "loading" || compareStatus === "loading" || latestFiles.busy || prevFiles.busy;
+  const completed = comparison.state.status === "success" && comparison.state.saved;
+  useEffect(() => {
+    setAnalysisActivity({ busy, dirty, completed });
+  }, [busy, dirty, completed]);
+  useEffect(() => resetAnalysisActivity, []);
 
   const st = inspection.state;
   const githubStage: StageResult | undefined =
@@ -170,6 +252,12 @@ export function AnalyzeWorkspace() {
           ? { state: "error", error: ex.error.message }
           : undefined;
 
+  // 첨부 영역에서 중복으로 빠지는 파일과 이유
+  const skippedOf = (doc: ReturnType<typeof composeDocument>) => new Map(doc.skipped.map((s) => [s.id, s.reason]));
+  const latestSkipped = skippedOf(latestDoc);
+  const prevSkipped = skippedOf(prevDoc);
+  const directDup = (doc: ReturnType<typeof composeDocument>) => doc.skipped.find((s) => s.id === "direct")?.reason;
+
   return (
     <form
       onSubmit={onSubmit}
@@ -198,7 +286,7 @@ export function AnalyzeWorkspace() {
                     checked={values.mode === m.value}
                     onChange={() => {
                       setValues((v) => ({ ...v, mode: m.value, type: m.value === "diff" ? "meeting" : v.type }));
-                      setErrors({});
+                      setFlagged({});
                     }}
                     className="sr-only"
                   />
@@ -226,27 +314,27 @@ export function AnalyzeWorkspace() {
             <FieldError id="e-name" message={errors.name} />
           </div>
           {!diffMode && (
-          <fieldset>
-            <legend className="mb-1.5 text-sm font-medium">문서 유형</legend>
-            <div className="grid grid-cols-3 gap-2 sm:max-w-md">
-              {INPUT_TYPES.map((t) => (
-                <label
-                  key={t.value}
-                  className="flex cursor-pointer items-center justify-center rounded-md border border-line-strong bg-surface px-2 py-2 text-center text-sm has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-semibold has-[:checked]:text-accent-text has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent"
-                >
-                  <input
-                    type="radio"
-                    name="type"
-                    value={t.value}
-                    checked={values.type === t.value}
-                    onChange={() => update("type", t.value)}
-                    className="sr-only"
-                  />
-                  {t.label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+            <fieldset>
+              <legend className="mb-1.5 text-sm font-medium">문서 유형</legend>
+              <div className="grid grid-cols-3 gap-2 sm:max-w-md">
+                {INPUT_TYPES.map((t) => (
+                  <label
+                    key={t.value}
+                    className="flex cursor-pointer items-center justify-center rounded-md border border-line-strong bg-surface px-2 py-2 text-center text-sm has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:font-semibold has-[:checked]:text-accent-text has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent"
+                  >
+                    <input
+                      type="radio"
+                      name="type"
+                      value={t.value}
+                      checked={values.type === t.value}
+                      onChange={() => update("type", t.value)}
+                      className="sr-only"
+                    />
+                    {t.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           )}
         </StepSection>
 
@@ -257,33 +345,41 @@ export function AnalyzeWorkspace() {
                 kind="meeting"
                 id="f-previousText"
                 label="이전 회의록"
-                hint="이전 회의에서 합의된 결정과 할 일을 붙여넣으세요."
+                hint="이전 회의에서 합의된 결정과 할 일을 붙여넣거나, 아래에서 파일을 첨부하세요."
                 value={values.previousText ?? ""}
                 error={errors.previousText}
                 onChange={(v) => update("previousText", v)}
                 onBlur={() => blur("previousText")}
               />
-              <UploadPanel
-                id="f-prevFile"
-                hasText={(values.previousText ?? "").trim() !== ""}
-                onApply={(t) => update("previousText", t)}
+              <AttachmentPanel
+                idPrefix="f-prev"
+                label="이전 회의록"
+                api={prevFiles}
+                totalChars={prevDoc.text.length}
+                skipped={prevSkipped}
                 disabled={extractStatus === "loading"}
               />
+              {directDup(prevDoc) && <p className="text-xs text-warn">직접 입력한 이전 회의록: {directDup(prevDoc)}</p>}
             </>
           )}
           <DocumentEditor
             kind={values.type}
             label={diffMode ? "최신 회의록" : undefined}
-            hint={diffMode ? "가장 최근 회의에서 합의된 결정과 할 일을 붙여넣으세요." : undefined}
+            hint={diffMode ? "가장 최근 회의에서 합의된 결정과 할 일을 붙여넣거나, 아래에서 파일을 첨부하세요." : "내용을 붙여넣거나, 아래에서 파일을 첨부하세요."}
             value={values.text}
             error={errors.text}
-            onChange={(v) => {
-              setUploadStage(undefined);
-              update("text", v);
-            }}
+            onChange={(v) => update("text", v)}
             onBlur={() => blur("text")}
           />
-          <UploadPanel hasText={values.text.trim() !== ""} onApply={(t) => update("text", t)} onStage={setUploadStage} disabled={extractStatus === "loading"} />
+          <AttachmentPanel
+            idPrefix="f-latest"
+            label={diffMode ? "최신 회의록" : "문서"}
+            api={latestFiles}
+            totalChars={latestDoc.text.length}
+            skipped={latestSkipped}
+            disabled={extractStatus === "loading"}
+          />
+          {directDup(latestDoc) && <p className="text-xs text-warn">직접 입력한 내용: {directDup(latestDoc)}</p>}
         </StepSection>
 
         <StepSection step={3} title="GitHub 저장소" state={stepState(2)} last>
@@ -299,12 +395,12 @@ export function AnalyzeWorkspace() {
               onChange={(e) => update("repoUrl", e.target.value)}
               onBlur={() => blur("repoUrl")}
               placeholder="https://github.com/소유자/저장소"
-              aria-invalid={errors.repoUrl ? true : undefined}
-              aria-describedby={errors.repoUrl ? "e-repoUrl" : undefined}
+              aria-invalid={repoError ? true : undefined}
+              aria-describedby={repoError ? "e-repoUrl" : undefined}
               autoComplete="off"
               className={`${inputCls} font-mono sm:max-w-xl`}
             />
-            <FieldError id="e-repoUrl" message={errors.repoUrl} />
+            <FieldError id="e-repoUrl" message={repoError} />
             <button
               type="button"
               onClick={inspectRepo}

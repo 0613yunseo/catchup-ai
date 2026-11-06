@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NewAnalysisLink } from "@/components/new-analysis-link";
 import { Logo } from "@/components/logo";
 import { NavLinks } from "@/components/nav-links";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -16,9 +16,9 @@ export function SiteHeader() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link href="/analyze" className={`${btnPrimary} hidden h-8 px-3 sm:inline-flex`}>
+          <NewAnalysisLink className={`${btnPrimary} hidden h-8 px-3 sm:inline-flex`}>
             분석 시작
-          </Link>
+          </NewAnalysisLink>
         </div>
       </div>
     </header>

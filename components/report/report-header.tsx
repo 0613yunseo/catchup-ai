@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NewAnalysisLink } from "@/components/new-analysis-link";
 import { btnSecondary } from "@/components/button-styles";
 import type { Report } from "@/lib/report";
 
@@ -51,9 +51,9 @@ export function ReportHeader({ report }: { report: Report | null }) {
         )}
       </div>
       <div className="flex gap-2">
-        <Link href="/analyze" className={btnSecondary}>
+        <NewAnalysisLink className={btnSecondary}>
           {report ? "다시 분석" : "새 분석"}
-        </Link>
+        </NewAnalysisLink>
       </div>
     </header>
   );

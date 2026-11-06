@@ -35,6 +35,7 @@ export function useComparison(key: string) {
       setResult({ key, state: { status: "loading" } });
       try {
         const outcome = await requestCompare(body, controller.signal);
+        if (controller.signal.aborted) return; // 새 분석·화면 이동으로 취소된 뒤 늦게 도착한 응답은 반영하지 않는다
         if (!outcome.ok) {
           setResult({ key, state: { status: "error", error: outcome.error } });
         } else if (body.commitSha && outcome.data.repository.commitSha !== body.commitSha) {

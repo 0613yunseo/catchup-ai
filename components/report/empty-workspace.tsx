@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NewAnalysisLink } from "@/components/new-analysis-link";
 import { btnPrimary, btnSecondary } from "@/components/button-styles";
 import { CodePanelEmpty } from "@/components/code-panel";
 import { InfoIcon } from "@/components/icons";
@@ -47,9 +47,9 @@ export function EmptyWorkspace({ reason, onClear }: Props) {
           </>
         )}
         <div className="mt-6 flex flex-wrap gap-2">
-          <Link href="/analyze" className={btnPrimary}>
+          <NewAnalysisLink className={btnPrimary}>
             새 분석 시작
-          </Link>
+          </NewAnalysisLink>
           {invalid && onClear && (
             <button type="button" onClick={onClear} className={btnSecondary}>
               저장된 결과 지우기

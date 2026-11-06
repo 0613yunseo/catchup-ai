@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FileTextIcon, PlusIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
+import { NewAnalysisLink } from "@/components/new-analysis-link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const ITEMS = [
@@ -15,17 +16,20 @@ export function AppSidebar() {
   const pathname = usePathname();
   const nav = ITEMS.map(({ href, label, Icon }) => {
     const active = pathname === href;
+    const cls = `flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+      active ? "bg-accent-soft font-medium text-accent-text" : "text-muted hover:bg-sunken hover:text-fg"
+    }`;
+    // 새 분석은 어느 화면에서 눌러도 이전 상태 없이 새로 시작한다.
+    if (href === "/analyze") {
+      return (
+        <NewAnalysisLink key={href} className={cls} current={active}>
+          <Icon className="size-4" />
+          {label}
+        </NewAnalysisLink>
+      );
+    }
     return (
-      <Link
-        key={href}
-        href={href}
-        aria-current={active ? "page" : undefined}
-        className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-          active
-            ? "bg-accent-soft font-medium text-accent-text"
-            : "text-muted hover:bg-sunken hover:text-fg"
-        }`}
-      >
+      <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cls}>
         <Icon className="size-4" />
         {label}
       </Link>

@@ -28,6 +28,7 @@ export function useRepoInspection(repoUrl: string) {
     setResult({ url, state: { status: "loading" } });
     try {
       const outcome = await requestInspect(url, controller.signal);
+      if (controller.signal.aborted) return; // 새 조회·새 분석으로 취소된 뒤 늦게 도착한 응답은 반영하지 않는다
       setResult({
         url,
         state: outcome.ok ? { status: "success", data: outcome.data } : { status: "error", error: outcome.error },

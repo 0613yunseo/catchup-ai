@@ -106,3 +106,8 @@ export const GitBranchIcon = (p: P) => (
     <path d="M6 7v10M18 10c0 4-6 3-12 7" />
   </Svg>
 );
+export const XIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Svg>
+);

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { NewAnalysisLink } from "@/components/new-analysis-link";
 import { ArrowRightIcon, CheckIcon, MinusCircleIcon } from "@/components/icons";
 import { btnOnAccent, btnPrimary, btnSecondary } from "@/components/button-styles";
 import { ProductPreview } from "@/components/marketing/product-preview";
@@ -46,10 +47,10 @@ export default function Home() {
                 회의록과 요구사항을 GitHub 코드와 비교해, 구현 여부를 근거와 함께 확인하세요.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/analyze" className={btnPrimary}>
+                <NewAnalysisLink className={btnPrimary}>
                   분석 시작
                   <ArrowRightIcon />
-                </Link>
+                </NewAnalysisLink>
                 <Link href="/report" className={btnSecondary}>
                   리포트 화면 보기
                 </Link>
@@ -131,10 +132,10 @@ export default function Home() {
             <p className="mt-4 max-w-md opacity-90">
               프로젝트 이름, 문서, 공개 저장소 주소만 있으면 됩니다.
             </p>
-            <Link href="/analyze" className={`${btnOnAccent} mt-8`}>
+            <NewAnalysisLink className={`${btnOnAccent} mt-8`}>
               분석 시작
               <ArrowRightIcon />
-            </Link>
+            </NewAnalysisLink>
           </div>
           <div>
             <h3 className="text-sm font-semibold opacity-90">현재 구현 현황</h3>
