@@ -5,6 +5,7 @@
 import type { ResponsesClient } from "./extract.ts";
 
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
+const THINKING_BUDGET = 512;
 
 // Gemini responseJsonSchema가 받는 키워드만 남긴다. 나머지(minLength, pattern 등)는 서버 쪽 validateOutput이 검사한다.
 const SCHEMA_KEYS = new Set([
@@ -65,6 +66,8 @@ export function createGeminiClient(apiKey: string, fetchImpl: typeof fetch = fet
           generationConfig: {
             // 생각(thinking) 토큰도 출력 한도에 포함되므로 답변 몫과 별도로 여유를 둔다.
             maxOutputTokens: maxOut + 4096,
+            // 생각을 길게 하면 호출 제한 시간(40초)을 넘기므로 짧게 제한한다. 정확성은 서버 검증이 맡는다.
+            thinkingConfig: { thinkingBudget: THINKING_BUDGET },
             responseMimeType: "application/json",
             ...(format?.schema ? { responseJsonSchema: toGeminiSchema(format.schema) } : {}),
           },
