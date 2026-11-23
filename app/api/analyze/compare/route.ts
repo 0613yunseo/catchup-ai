@@ -4,7 +4,7 @@ import { COMPARE_LIMITS } from "@/lib/compare/limits";
 import { parseCompareRequest } from "@/lib/compare/request";
 import type { CompareErrorInfo } from "@/lib/compare/types";
 import { readConfig } from "@/lib/extract/config";
-import { createOpenAIClient } from "@/lib/extract/openai-client";
+import { createModelClient } from "@/lib/extract/openai-client";
 import { clientKey, getSharedLimiter } from "@/lib/extract/shared-limiter";
 import { collectRepository } from "@/lib/github/collect";
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   }
 
   // 키가 없으면 모델도 GitHub도 부르지 않고 설정 누락을 그대로 알린다. 가짜 결과를 만들지 않는다.
-  const { apiKey, model } = readConfig(process.env);
+  const { apiKey, model, provider } = readConfig(process.env);
   if (!apiKey) return fail(new CompareError("NOT_CONFIGURED").toInfo());
 
   const slot = limiter.acquire(clientKey(request));
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await compareRequirements(input, {
-      client: createOpenAIClient(apiKey),
+      client: createModelClient(provider, apiKey),
       model,
       collect: (ref, opts) => collectRepository(ref, { commitSha: opts.commitSha, token: process.env.GITHUB_TOKEN }),
     });

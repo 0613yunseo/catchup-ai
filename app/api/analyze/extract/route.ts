@@ -2,7 +2,7 @@ import { ExtractError, httpStatusFor } from "@/lib/extract/errors";
 import { readConfig } from "@/lib/extract/config";
 import { extractRequirements } from "@/lib/extract/extract";
 import { EXTRACT_LIMITS, RATE_LIMIT } from "@/lib/extract/limits";
-import { createOpenAIClient } from "@/lib/extract/openai-client";
+import { createModelClient } from "@/lib/extract/openai-client";
 import { clientKey, getSharedLimiter } from "@/lib/extract/shared-limiter";
 import { parseExtractRequest } from "@/lib/extract/request";
 import type { ExtractErrorInfo } from "@/lib/extract/types";
@@ -62,14 +62,14 @@ export async function POST(request: Request) {
   }
 
   // 키가 없으면 모델을 부르지 않고 설정 누락을 그대로 알린다. 가짜 결과를 만들지 않는다.
-  const { apiKey, model } = readConfig(process.env);
+  const { apiKey, model, provider } = readConfig(process.env);
   if (!apiKey) return fail(new ExtractError("NOT_CONFIGURED").toInfo());
 
   const slot = limiter.acquire(clientKey(request));
   if (!slot.ok) return fail(new ExtractError(slot.code, slot.retryAfterSec).toInfo());
 
   try {
-    const result = await extractRequirements(input, { client: createOpenAIClient(apiKey), model });
+    const result = await extractRequirements(input, { client: createModelClient(provider, apiKey), model });
     // 문서 내용과 키는 기록하지 않는다. 사용량과 시간만 남긴다.
     console.info(
       "extract.ok",

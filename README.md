@@ -95,14 +95,14 @@ AI가 생성한 코드 인용은 서버에서 실제 GitHub 원본과 대조합�
 | 영역 | 기술 | 역할 |
 | --- | --- | --- |
 | 프런트엔드·서버 | Next.js 16, React, TypeScript | 반응형 웹 UI, 서버 API |
-| AI 분석 | OpenAI API | 요구사항 추출, 변경 탐지, 코드 비교 |
+| AI 분석 | Google Gemini API (OpenAI API로 교체 가능) | 요구사항 추출, 변경 탐지, 코드 비교 |
 | 외부 소스 | GitHub REST API | 공개 저장소 확인, 파일 및 코드 조회 |
 | 인증·데이터 | Supabase Auth, PostgreSQL | 이메일 인증, 클라우드 리포트 이력 |
 | 접근 통제 | Supabase Row Level Security (RLS) | 사용자별 분석 기록 접근 제한 |
 | 배포 | Vercel | 프로덕션 웹 서비스 운영 |
 | 테스트 | 자동 테스트, TypeScript, ESLint, Playwright | 코드·API·브라우저 동작 점검 |
 
-**보안 설계:** OpenAI API 키는 서버 측 환경변수로 관리합니다. Supabase 기록 테이블은 로그인 사용자에게 필요한 조회·생성·삭제 권한을 부여하고, RLS 정책으로 `auth.uid()`와 소유자 `user_id` 일치를 확인합니다. 저장되는 대상은 분석 리포트이며, 원본 첨부파일 자체를 보관하는 구조는 아닙니다.
+**보안 설계:** AI API 키(Gemini 또는 OpenAI)는 서버 측 환경변수로 관리합니다. Supabase 기록 테이블은 로그인 사용자에게 필요한 조회·생성·삭제 권한을 부여하고, RLS 정책으로 `auth.uid()`와 소유자 `user_id` 일치를 확인합니다. 저장되는 대상은 분석 리포트이며, 원본 첨부파일 자체를 보관하는 구조는 아닙니다.
 
 ## 5. 서비스 이용 방법
 
@@ -122,7 +122,7 @@ AI가 생성한 코드 인용은 서버에서 실제 GitHub 원본과 대조합�
 
 - **Qwen2.5-1.5B-Instruct 추론 실험:** 회의록에서 요구사항을 추출하는 프롬프트를 시험하고 Greedy 및 Temperature 0.7 설정을 비교했습니다. 원문 인용과 결정 상태 분류의 신뢰성 문제를 점검하는 데 참고했습니다.
 - **SDXL Turbo 이미지 생성:** 서비스의 메인 히어로 이미지 제작에 활용했고, 결과물을 실제 홈페이지에 적용했습니다.
-- **프로덕션 AI 엔진:** 실제 웹서비스의 요구사항 추출·변경 탐지·코드 비교에는 **OpenAI API**를 사용합니다. GPU 실험에서 사용한 Qwen 모델이 프로덕션 분석 엔진은 아닙니다.
+- **프로덕션 AI 엔진:** 실제 웹서비스의 요구사항 추출·변경 탐지·코드 비교에는 **Google Gemini API**를 사용합니다(해커톤 당시에는 OpenAI API). 두 공급자 모두 같은 구조화 출력 · 검증 흐름을 거치며, 환경변수로 바꿀 수 있습니다. GPU 실험에서 사용한 Qwen 모델이 프로덕션 분석 엔진은 아닙니다.
 
 관련 자료:
 
@@ -163,8 +163,11 @@ npm run dev
 필요한 환경변수의 예시는 다음과 같습니다. **실제 API 키나 비밀번호는 Git에 커밋하지 않습니다.**
 
 ```dotenv
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_MODEL=your_openai_model
+# GEMINI_API_KEY가 있으면 Gemini, 없으면 OpenAI를 사용합니다.
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-flash-latest
+# OPENAI_API_KEY=your_openai_api_key
+# OPENAI_MODEL=your_openai_model
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
