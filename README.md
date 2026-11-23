@@ -165,7 +165,7 @@ npm run dev
 ```dotenv
 # GEMINI_API_KEY가 있으면 Gemini, 없으면 OpenAI를 사용합니다.
 GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-flash-latest
+GEMINI_MODEL=gemini-flash-lite-latest
 # OPENAI_API_KEY=your_openai_api_key
 # OPENAI_MODEL=your_openai_model
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url

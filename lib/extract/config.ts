@@ -2,8 +2,12 @@ import { DEFAULT_MODEL } from "./limits.ts";
 
 export type Provider = "openai" | "gemini";
 
-/** Gemini 기본 모델. 항상 최신 Flash 모델을 가리키는 별칭이다. GEMINI_MODEL로 바꿀 수 있다. */
-export const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+/**
+ * Gemini 기본 모델. 최신 Flash-Lite를 가리키는 별칭이다. GEMINI_MODEL로 바꿀 수 있다.
+ * 무료 등급에서 최신 Flash(3.7·3.8, flash-latest)는 수요 과다(503)가 잦고, 3.5 Flash는 응답이 느려
+ * 호출 제한 시간(40초)을 넘기기 쉬웠다. Lite는 짧은 문서 기준 2초 안팎으로 응답했다(2026-11-23 확인).
+ */
+export const DEFAULT_GEMINI_MODEL = "gemini-flash-lite-latest";
 
 const MODEL_RE = /^[A-Za-z0-9._:-]{1,64}$/;
 

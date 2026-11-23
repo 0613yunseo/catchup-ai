@@ -6,6 +6,8 @@ import type { ResponsesClient } from "./extract.ts";
 
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 const THINKING_BUDGET = 512;
+/** 요청한 모델이 수요 과다(503)일 때 한 번 더 시도할 모델 */
+export const FALLBACK_MODEL = "gemini-3.5-flash-lite";
 
 // Gemini responseJsonSchema가 받는 키워드만 남긴다. 나머지(minLength, pattern 등)는 서버 쪽 validateOutput이 검사한다.
 const SCHEMA_KEYS = new Set([
@@ -75,14 +77,19 @@ export function createGeminiClient(apiKey: string, fetchImpl: typeof fetch = fet
 
         const ctrl = new AbortController();
         const timer = options?.timeout ? setTimeout(() => ctrl.abort(), options.timeout) : null;
-        let res: Response;
+        let res!: Response;
+        // 요청한 모델이 수요 과다(503)면 같은 제한 시간 안에서 대체 모델로 한 번 더 보낸다.
+        const models = model === FALLBACK_MODEL ? [model] : [model, FALLBACK_MODEL];
         try {
-          res = await fetchImpl(`${ENDPOINT}/${encodeURIComponent(model)}:generateContent`, {
-            method: "POST",
-            headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-            body: JSON.stringify(body),
-            signal: ctrl.signal,
-          });
+          for (let i = 0; i < models.length; i++) {
+            res = await fetchImpl(`${ENDPOINT}/${encodeURIComponent(models[i])}:generateContent`, {
+              method: "POST",
+              headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+              body: JSON.stringify(body),
+              signal: ctrl.signal,
+            });
+            if (res.status !== 503 || i === models.length - 1) break;
+          }
         } catch (e) {
           const err = e as Error;
           // AbortError → TIMEOUT, 그 밖의 연결 실패 → NETWORK 로 분류된다.
